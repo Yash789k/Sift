@@ -1,0 +1,4 @@
+Aurora.png is an original procedural illustration created for the Sift conversion demo.
+Readme.pdf contains original Sift field notes, and Readme-page-001.jpg is its rendered first page.
+These project-created samples contain no personal data and use the project's GPL-3.0-or-later license.
+Use them to try conversion, crop, backgrounds and PDF export.

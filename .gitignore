@@ -1,0 +1,11 @@
+node_modules/
+.demo-data/
+dist/
+*.log
+src/native/*.exe
+.DS_Store
+Thumbs.db
+*.zip
+.env
+.env.*
+!.env.example

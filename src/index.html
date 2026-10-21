@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'none'; object-src 'none'; frame-src 'none'">
+<title>Sift</title><link rel="stylesheet" href="styles.css"></head>
+<body class="wheel-mode">
+<main id="wheel-view" aria-label="Sift circular file menu">
+<svg id="wheel" viewBox="0 0 400 400" aria-label="Drop a file on a format. Right click or press Tab for tools.">
+<defs><linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#bd9543" stop-opacity=".55"/><stop offset="1" stop-color="#b87346" stop-opacity=".38"/></linearGradient><linearGradient id="petal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff0bd" stop-opacity=".91"/><stop offset="1" stop-color="#ffdfcf" stop-opacity=".87"/></linearGradient></defs>
+<circle class="rim" cx="200" cy="200" r="184"/><g id="wedges"></g>
+<g id="center" role="button" tabindex="0" aria-label="Choose files"><circle class="center-well" cx="200" cy="200" r="65"/><rect class="center-pill" x="147" y="175" width="106" height="50" rx="25"/><text id="center-label" x="200" y="205" text-anchor="middle">Choose</text><title id="center-title">Choose files · Ctrl+O. Right click or Tab switches formats and tools.</title></g></svg>
+<div id="wheel-hint" aria-hidden="true">Drag · Shift · Drop</div></main>
+<section id="editor-view" class="hidden" aria-label="Image editor">
+<header class="editor-titlebar"><button id="editor-close" class="close-button" aria-label="Close editor">×</button><h1 id="editor-title">Crop Image</h1><span class="title-spacer"></span></header>
+<div class="editor-content"><div id="preview-stage" class="preview-stage"><div id="image-plane"><img id="preview-image" alt="Image being edited" draggable="false"><div id="selection" class="hidden"><span data-handle="nw"></span><span data-handle="n"></span><span data-handle="ne"></span><span data-handle="e"></span><span data-handle="se"></span><span data-handle="s"></span><span data-handle="sw"></span><span data-handle="w"></span></div><div id="annotation-preview"></div></div><img id="processed-preview" class="hidden" alt="Background preview" draggable="false"><div id="preview-loading" class="hidden">Preparing preview…</div></div>
+<div id="metadata-list" class="hidden"></div><div id="editor-controls"></div><p id="editor-error" role="alert"></p></div>
+<footer class="editor-footer"><button id="reset-editor" class="subtle-button">Reset</button><span id="editor-progress" aria-live="polite"></span><button id="apply-editor" class="primary-button">Apply</button></footer></section>
+<aside id="notice" class="hidden" role="status"><span id="notice-text"></span><button id="reveal-result" class="hidden">Show</button><button id="notice-close" aria-label="Dismiss">×</button></aside>
+<script src="drop-policy.js"></script><script src="ingestion-gate.js"></script><script src="wheel-geometry.js"></script><script src="renderer.js"></script></body></html>

@@ -1,0 +1,26 @@
+name: Test and build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build:native
+      - run: npm test
+      - run: npm run package
+      # No binary artifact/release upload. See DISTRIBUTION.md for the
+      # corresponding-source requirements before redistributing codec binaries.
