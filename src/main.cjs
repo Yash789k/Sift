@@ -5,6 +5,7 @@ const { inspectFiles, getCapabilities, convert, previewFile } = require('../engi
 const { startGlobalGesture, requestMacGestureAccess } = require('./global-gesture.cjs');
 const { startCapture, stopCapture } = require('./capture.cjs');
 const { createWindowsDragContext } = require('./drag-context.cjs');
+const { notifySavedOutputs } = require('./desktop-output.cjs');
 app.setName('Sift');
 const isDemo = process.argv.includes('--demo');
 if (isDemo) app.setPath('userData', path.join(__dirname, '..', '.demo-data'));
@@ -138,7 +139,10 @@ function handleLaunchArguments(args,initial=false){
   }
 }
 function createWindow(){
-  Menu.setApplicationMenu(null);
+  // macOS routes standard text-editing shortcuts through native menu roles.
+  Menu.setApplicationMenu(process.platform==='darwin'
+    ? Menu.buildFromTemplate([{role:'appMenu'},{role:'editMenu'}])
+    : null);
   if(process.platform==='win32')selectionProbe=createWindowsDragContext();
   win=new BrowserWindow({
     width:400,height:400,minWidth:1,minHeight:1,title:'Sift',backgroundColor:'#00000000',icon:path.join(__dirname,'icon.png'),
@@ -167,7 +171,13 @@ async function runJob(request,runner,label){
     const started=performance.now();
     const results=await runner({...request,outputDir:state.outputDir},progress=>send('progress',progress),controller.signal);
     const successes=results.filter(item=>!item.error);
-    if(successes.length){state.history=[...successes.map(item=>({...item,time:Date.now(),format:label})),...state.history].slice(0,30);saveState();}
+    if(successes.length){
+      state.history=[...successes.map(item=>({...item,time:Date.now(),format:label})),...state.history].slice(0,30);saveState();
+      // Refresh shell views and place new desktop icons without delaying save.
+      void notifySavedOutputs(successes).then(summary=>{
+        if(summary?.notified)recordGesture({event:'desktop-outputs',notified:summary.notified,placed:summary.placed||0,skipped:summary.skipped||0});
+      }).catch(()=>recordGesture({event:'desktop-refresh-unavailable'}));
+    }
     recordGesture({event:'operation-finished',operation:label,count:results.length,elapsedMs:Math.round(performance.now()-started)});
     send('state',state);return results;
   }finally{currentJob=null;retainedQuick=false;}

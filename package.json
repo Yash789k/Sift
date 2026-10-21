@@ -7,6 +7,7 @@
   "scripts": {
     "setup": "node node_modules/electron/install.js",
     "start": "electron .",
+    "pretest": "node scripts/build-native.cjs",
     "test": "node --test tests/*.test.cjs",
     "package": "node scripts/package.cjs",
     "build:native": "node scripts/build-native.cjs",

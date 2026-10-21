@@ -2,7 +2,7 @@
 
 Sift 0.2 is an offline desktop file converter with a transparent circular wheel and compact image tools. It is an independent, original implementation inspired by [Tangerine](https://www.tangerineformac.com/), for Windows and macOS. **No API keys, accounts or conversion server are required.**
 
-The Windows build passes **65 automated tests, 12 actual-Electron UI checks and seven main-process lifecycle checks**. A real keyboard-driven conversion in the packaged wheel produced a decoded WebP and preserved the source. **Physical Windows drag + modifier activation and all macOS hardware behavior remain unverified.** This is an unsigned development build; the CI configuration has not yet run.
+The **physical Windows drag + Shift workflow is user-verified**. Windows checks pass 68 automated tests, 13 actual-Electron UI checks and seven main-process lifecycle checks. The wheel includes a visible Tools/Formats switch. Desktop output icons are refreshed and positioned near their originals, with actual shell-coordinate readback and unchanged file hashes verified for five existing outputs and a fresh conversion. **macOS hardware behavior remains unverified**, including Apple Silicon. This is an unsigned development build; CI has not yet run.
 
 ## Run from source
 
@@ -31,16 +31,20 @@ CI is configured for `windows-latest`, `macos-15` and `macos-15-intel`, using No
 
 1. Open Sift from the tray/menu bar or press **Ctrl+Alt+Space** on Windows, **Command+Option+Space** on macOS.
 2. Click the center or use **Ctrl+O / Command+O** to choose a file.
-3. Click a format wedge to create an output, or press **Tab** / right-click to switch to image tools.
+3. Click a format wedge to create an output. For image tools, click **Tools ›** in the center well; **Formats ›** returns to conversions. **Tab** and right-click also switch.
 4. In a compact editor, adjust the real preview and apply. Reveal the saved result from the success notice.
 
-The intended global workflow is to drag files from File Explorer/Desktop on Windows or a file source on macOS, then hold **Shift** for formats. Hold **Alt** on Windows or **Command** on macOS for tools. Drop directly on a target. Physical activation still needs target-machine verification. On macOS, use **Enable drag shortcut access…** in the menu to request OS Input Monitoring access, then reopen Sift after granting it. The adapter checks the native drag pasteboard for files.
+The switch preserves your selected files. Use arrow keys to move among wedges, the center and the switch; **Enter** or **Space** activates a focused control. Dragging a file across the switch does not change modes.
+
+Drag files from File Explorer/Desktop on Windows or a file source on macOS, then hold **Shift** for formats. Hold **Alt** on Windows or **Command** on macOS for tools. Drop directly on a target. The user confirmed the Windows file-drag conversion path; macOS activation still needs target-machine verification. On macOS, use **Enable drag shortcut access…** in the menu to request OS Input Monitoring access, then reopen Sift after granting it. The adapter checks the native drag pasteboard for files.
 
 The Windows source guard excludes browser/text/dialog drags and OS window move/resize loops. Explorer marquee selection or another in-content mouse drag may still briefly open the wheel when a modifier is held: window-class eligibility and advisory selection context cannot establish a genuine file drag. **No conversion occurs without a real file drop or explicit file selection.** This remains a physical-testing limitation.
 
 **Escape** cancels an active operation, returns from an editor, or hides the wheel. Closing/hiding leaves Sift available in the tray/menu bar; **Quit Sift** exits and stops detection.
 
 Outputs save **beside each original** by default. Existing names receive suffixes; originals are preserved. The tray/menu item **Save beside originals** restores this default if a custom destination was previously selected.
+
+On Windows, successful saves notify Explorer immediately. For Desktop sources, including a redirected OneDrive Desktop, Sift also places the new icon in a free grid slot near its original. This runs separately from conversion and does not delay the saved result. The helper preserves other icons, selection and focus, and stays within the source monitor's work area. If Auto arrange is enabled, desktop icons are hidden, or no nearby slot is available, Windows keeps control of placement; Sift does not change those settings. macOS uses Finder's normal file/icon handling.
 
 ## Formats
 
