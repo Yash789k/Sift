@@ -16,6 +16,8 @@ npm start
 
 Setup downloads dependencies and Electron. Conversions run locally afterward. Windows also needs the .NET Framework C# compiler at its standard Windows location; `npm start` builds the small Explorer selection helper automatically. `Start Sift.cmd` launches an installed Windows checkout.
 
+On an Apple Silicon Mac, extract the source ZIP into a local folder, install Node.js 24 for macOS ARM64, and open `Start Sift.command`. It installs missing dependencies and opens the wheel. The launcher can also be run as `zsh "Start Sift.command"` in Terminal. Install dependencies on the Mac itself; the source ZIP contains no Windows binaries. Use the menu-bar item **Enable drag shortcut access…**, grant Sift/Electron Input Monitoring in System Settings, then quit and reopen the app. Verify a Finder JPG drag with Shift and a WEBP drop before considering macOS activation tested.
+
 ```sh
 npm test
 npm run package
