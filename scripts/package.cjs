@@ -73,6 +73,7 @@ async function main() {
   if (options.platform === 'win32' && options.arch !== 'x64') throw new Error('Windows builds require x64: ffmpeg-static does not supply a Windows arm64 binary.');
   if (process.env.SIFT_NOTARIZE === '1' && options.platform !== 'darwin') throw new Error('Apple notarization requires a macOS build host.');
   checkNotarizationEnvironment();
+  if (process.env.SIFT_RELEASE === '1') require('./check-release-codecs.cjs').checkReleaseCodecs();
   buildNative();
   const { build, Platform, Arch } = require('electron-builder');
   const platform = options.platform === 'win32' ? Platform.WINDOWS : Platform.MAC;
