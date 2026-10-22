@@ -152,13 +152,12 @@ jobs:
         run: |
           hdiutil verify dist/Sift-*-macos-arm64.dmg
           codesign --verify --deep --strict dist/mac-arm64/Sift.app
-          ELECTRON_RUN_AS_NODE=1 dist/mac-arm64/Sift.app/Contents/MacOS/Sift scripts/test-packaged.cjs
+          node scripts/run-packaged-test.cjs dist/mac-arm64/Sift.app/Contents/MacOS/Sift
       - name: Verify Windows packaged runtime
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $env:ELECTRON_RUN_AS_NODE = '1'
-          & dist/win-unpacked/Sift.exe scripts/test-packaged.cjs
+          node scripts/run-packaged-test.cjs dist/win-unpacked/Sift.exe
           if ($LASTEXITCODE -ne 0) { throw 'Packaged runtime smoke test failed' }
       - name: Verify Windows installation and removal
         if: runner.os == 'Windows'
@@ -170,10 +169,8 @@ jobs:
           if (-not $process.WaitForExit(120000) -or $process.ExitCode -ne 0) { throw 'Installer failed' }
           $installed = Join-Path $env:LOCALAPPDATA 'Programs/sift-desktop'
           if (-not (Test-Path "$installed/Sift.exe")) { throw 'Installed executable is missing' }
-          $env:ELECTRON_RUN_AS_NODE = '1'
-          & "$installed/Sift.exe" scripts/test-packaged.cjs
+          node scripts/run-packaged-test.cjs "$installed/Sift.exe"
           if ($LASTEXITCODE -ne 0) { throw 'Installed app smoke test failed' }
-          Remove-Item Env:ELECTRON_RUN_AS_NODE
           $process = Start-Process "$installed/Uninstall Sift.exe" -ArgumentList '/S' -PassThru
           if (-not $process.WaitForExit(120000)) { throw 'Uninstaller timed out' }
           Start-Sleep -Seconds 3
