@@ -4060,5 +4060,22 @@
     "groups": [
       "notices"
     ]
+  },
+  {
+    "file": "electron-44.9.1.tar.gz",
+    "url": "https://codeload.github.com/electron/electron/tar.gz/refs/tags/v44.9.1",
+    "sha256": "ce2f596fd3702186a5cca0192088fb9ddc14a926c2a4d37664b1caea56a36dcd",
+    "groups": [
+      "native"
+    ]
+  },
+  {
+    "file": "electron-chromium-ffmpeg.tar.gz",
+    "url": "https://chromium.googlesource.com/chromium/third_party/ffmpeg.git/+archive/2b68d2babae73714846961fb0ee47e3b3d2e39a9.tar.gz",
+    "sha256": "1639116c2a549cea6b4a3ca7bc8083f73e65122b712a87d04e907aa7c2607c96",
+    "groups": [
+      "native"
+    ],
+    "contentSha256": "2249d54752ab4fb66a64c7dd1930c4c21df8c1e461b2512a04159f290f8e6ec7"
   }
 ]

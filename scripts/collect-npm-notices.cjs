@@ -24,3 +24,11 @@ for (const directory of directories) {
 }
 fs.writeFileSync(path.join(destination, 'packages.json'), JSON.stringify(packages, null, 2) + '\n');
 console.log(`Preserved notices for ${packages.length} production packages.`);
+
+// macOS packaging starts from Electron.app; the adjacent distribution notices
+// would otherwise be left outside the resulting app bundle.
+const runtimeNotices = path.join(root, 'licenses', 'electron');
+fs.mkdirSync(runtimeNotices, { recursive: true });
+for (const name of ['LICENSE', 'LICENSES.chromium.html']) {
+  fs.copyFileSync(path.join(root, 'node_modules', 'electron', 'dist', name), path.join(runtimeNotices, name));
+}

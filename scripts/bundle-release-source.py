@@ -59,6 +59,10 @@ sharp-libvips build recipe (macOS) or vips-windows-build/MXE recipe (Windows).
 The matching upstream component sources, patches and librsvg's Cargo.lock
 dependencies are supplied here. Preserve upstream configuration/patches.
 
+Electron 44.9.1 and its Chromium 152.0.7977.167 FFmpeg fork are included in
+electron-44.9.1.tar.gz and electron-chromium-ffmpeg.tar.gz. The Electron DEPS,
+patches and build instructions identify the rest of its build environment.
+
 Canvas/Skia is permissively licensed. Its source/notice collection is supplied
 for attribution. Upstream canvas does not publish a Rust lockfile for its npm
 binary; canvas-notices-* archives are supplemental license material, not a

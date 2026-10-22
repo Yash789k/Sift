@@ -67,13 +67,15 @@ The existing **libheif-js 1.23.5** decoder's build recipe is `catdad-experiments
 
 Sharp's **libvips 8.18.7** bundle is supplied by `sharp-libvips@1.3.4`. Preserve its `versions.json`, platform build recipes, all covered component sources and patches, including the Windows MXE recipes and librsvg's locked Rust dependencies. Its dynamic library remains a replaceable file because Sift uses unpacked application resources. Recipients can rebuild the complete GPL Sift app with modified components; no proprietary relinking tool or signing key is required for an unsigned build.
 
+Electron 44.9.1 uses Chromium 152.0.7977.167. Its embedded FFmpeg source is pinned at `2b68d2babae73714846961fb0ee47e3b3d2e39a9`; that source and Electron's release source/build patches accompany the release too. This is separate from Sift's command-line converter.
+
 Canvas/Skia, Electron/Chromium and the other production dependencies retain their notices. Sift collects upstream copyright/license files in the installed app's `licenses` directory; Electron's license and Chromium credit files are also preserved. The top-level dependency table is a guide, not a substitute for these full notices.
 
 [FFmpeg licensing guidance](https://ffmpeg.org/legal.html), [GPLv3 section 6](https://www.gnu.org/licenses/gpl-3.0.html#section6), [libheif license](https://github.com/strukturag/libheif/blob/master/COPYING).
 
 ## Maintainer release sequence
 
-1. Update `package.json` and `package-lock.json` to the intended version. Review dependency versions and source checksums together.
+1. Update `package.json`, `package-lock.json` and the README download links to the intended version. Review dependency versions and source checksums together.
 2. Run **Build installers** in GitHub Actions. Inspect any failed build or test; do not publish partial outputs.
 3. Verify the packaged app on each native target. Exercise real first-open warnings, file conversion, tray/menu access and uninstall on representative machines. Automated smoke tests do not replace a physical drag, Input Monitoring approval or a full login cycle.
 4. Assemble the matching source archive and full notices. Confirm each installer includes the replacement codecs recorded in `build/release-codecs.json` and excludes the old nonfree payload.
