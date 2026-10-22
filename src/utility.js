@@ -90,7 +90,9 @@ function render(value) {
   $('#startup').disabled = !startup.supported || pendingStartup;
   $('#startup-status').textContent = startup.message || (startup.enabled ? 'On · confirmed by your system' : 'Off · start Sift when you need it');
   $('#gesture').checked = state.gestureEnabled !== false;
-  $('#gesture-hint').textContent = `Hold Shift for formats · ${value.platform === 'darwin' ? 'Command' : 'Alt'} for image tools.`;
+  $('#gesture-hint').textContent = value.platform === 'darwin' && state.gestureEnabled !== false && !value.gestureAvailable
+    ? 'Waiting for Input Monitoring permission. Enable access below, then quit and reopen Sift.'
+    : `While dragging, hold Shift for formats · ${value.platform === 'darwin' ? 'Command' : 'Alt'} for image tools.`;
   $('#mac-permission').hidden = value.platform !== 'darwin' || value.gestureAvailable === true;
   $('#output-path').textContent = state.outputDir || 'Beside the originals';
   $('#reset-output').hidden = !state.outputDir;

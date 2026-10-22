@@ -8,7 +8,7 @@ This document is for maintainers. Signing, building and providing corresponding 
 
 ## Release contents and verification
 
-Release version 0.3.2 targets **macOS 13+ / Apple Silicon** and **Windows 11 / x64**. The release workflow builds each native executable on its target OS. It rebuilds FFmpeg and the HEIC encoder from locked, checksum-verified source archives (content hashes for upstream archives with variable timestamps), replaces the development npm payloads, records the resulting binary hashes and verifies those hashes before packaging. Normal local packaging remains separate from release publication.
+The 0.3 prereleases target **macOS 13+ / Apple Silicon** and **Windows 11 / x64**. The release workflow builds each native executable on its target OS. It rebuilds FFmpeg and the HEIC encoder from locked, checksum-verified source archives (content hashes for upstream archives with variable timestamps), replaces the development npm payloads, records the resulting binary hashes and verifies those hashes before packaging. Normal local packaging remains separate from release publication.
 
 Every public release must contain:
 
@@ -79,7 +79,9 @@ Canvas/Skia, Electron/Chromium and the other production dependencies retain thei
 2. Run **Build installers** in GitHub Actions. Inspect any failed build or test; do not publish partial outputs.
 3. Verify the packaged app on each native target. Exercise real first-open warnings, file conversion, tray/menu access and uninstall on representative machines. Automated smoke tests do not replace a physical drag, Input Monitoring approval or a full login cycle.
 4. Assemble the matching source archive and full notices. Confirm each installer includes the replacement codecs recorded in `build/release-codecs.json` and excludes the old nonfree payload.
-5. Create a draft GitHub release at the tested commit. Upload both installers, corresponding source and checksums. Write clear platform instructions and honest test limitations in the notes.
-6. Check that all assets are present, then publish with **Set as a pre-release** for this unsigned test release. Do not describe an ad-hoc Mac signature as notarization or a verified publisher.
+5. Create a draft GitHub release with **Set as a pre-release**, using the full tested commit SHA as its target. Write clear platform instructions and honest test limitations in the notes.
+6. Run **Publish verified prerelease** in GitHub Actions and enter the successful **Build installers** run ID (the number in its URL). This explicitly publishes the prepared draft: it downloads that run's artifacts directly on GitHub, verifies the source archive against the tested commit and every upstream checksum, uploads both installers/source/checksums, and checks GitHub's stored asset digests before publishing. It refuses a failed build, a different target commit, changed existing assets or an already-public release. The build workflow itself remains read-only. Do not describe an ad-hoc Mac signature as notarization or a verified publisher.
+
+For a local check without uploading or publishing, set `GH_REPO=owner/repository` and run `python3 scripts/publish-verified-release.py <run-id> <downloaded-artifacts-folder> --check-only` after signing in with `gh`. The same checks run during publication.
 
 Future signed releases can use the credential configuration above. Never commit certificates, tokens, passwords, profiles, private files or machine-specific diagnostic evidence.

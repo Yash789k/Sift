@@ -12,8 +12,8 @@ Get Sift from **[GitHub Releases](https://github.com/Yash789k/Sift/releases)**. 
 
 | Your computer | Download |
 |---|---|
-| Mac with an Apple chip (M1, M2, M3, M4 or newer), macOS 13+ | [Download for Apple Silicon (.dmg)](https://github.com/Yash789k/Sift/releases/download/v0.3.2/Sift-0.3.2-macos-arm64.dmg) |
-| Windows 11 PC with an Intel or AMD 64-bit processor | [Download for Windows (.exe)](https://github.com/Yash789k/Sift/releases/download/v0.3.2/Sift-0.3.2-windows-x64-setup.exe) |
+| Mac with an Apple chip (M1, M2, M3, M4 or newer), macOS 13+ | [Download for Apple Silicon (.dmg)](https://github.com/Yash789k/Sift/releases/download/v0.3.3/Sift-0.3.3-macos-arm64.dmg) |
+| Windows 11 PC with an Intel or AMD 64-bit processor | [Download for Windows (.exe)](https://github.com/Yash789k/Sift/releases/download/v0.3.3/Sift-0.3.3-windows-x64-setup.exe) |
 
 You need **only the installer for your computer**. Node.js, Electron and the conversion tools are already included. You do not need Git, Terminal commands, an account or an API key. The **Source code** and **Corresponding source** downloads are for developers, not installation. Native Windows ARM and Intel Mac installers are not part of this first prerelease.
 

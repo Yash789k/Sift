@@ -1,0 +1,31 @@
+name: Publish verified prerelease
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build installers run ID for an existing draft prerelease
+        required: true
+        type: string
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-prerelease
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download the selected build artifacts
+        run: |
+          [[ "$BUILD_RUN_ID" =~ ^[0-9]+$ ]]
+          gh run download "$BUILD_RUN_ID" --name installer-macos-arm64 --name installer-windows-x64 --name corresponding-source --dir artifacts
+      - name: Verify source, upload, check remote digests and publish the draft
+        run: python3 scripts/publish-verified-release.py "$BUILD_RUN_ID" artifacts

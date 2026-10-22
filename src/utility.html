@@ -23,7 +23,7 @@
       <div class="card settings-card">
         <label class="setting" for="startup"><span><strong>Launch at login</strong><small id="startup-status">Reading system status…</small></span><input id="startup" type="checkbox" role="switch" disabled></label>
         <label class="setting" for="gesture"><span><strong>Drag shortcuts</strong><small id="gesture-hint">Hold Shift while dragging for formats.</small></span><input id="gesture" type="checkbox" role="switch"></label>
-        <div id="mac-permission" class="permission" hidden><p>Enable Input Monitoring for Sift in System Settings to use drag shortcuts.</p><button id="gesture-access" class="subtle">Open shortcut access…</button></div>
+        <div id="mac-permission" class="permission" hidden><p>Enable Sift under Privacy &amp; Security → Input Monitoring, then choose Quit &amp; Reopen. Select a file in Finder, start dragging it, and hold Shift to show the wheel beside the pointer.</p><button id="gesture-access" class="subtle">Open shortcut access…</button></div>
       </div>
       <div class="card destination"><strong>Save converted files</strong><p id="output-path">Beside the originals</p><div class="actions"><button id="choose-output" class="subtle">Choose folder…</button><button id="reset-output" class="text-button">Use original folder</button></div><small>Originals stay untouched. Existing outputs get a new name.</small></div>
       <div class="card quiet-note"><strong>Local by design</strong><p>No account, uploads or conversion server. Your recent output paths and diagnostic logs are stored only on this device.</p><button id="logs" class="text-button">Open local logs</button></div>

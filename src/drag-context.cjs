@@ -6,7 +6,10 @@ const { fileURLToPath } = require('node:url');
 
 // Read the OS-owned drag pasteboard; never alter the user's clipboard.
 function createMacDragContext(koffi) {
-  koffi.load('/System/Library/Frameworks/AppKit.framework/AppKit');
+  const appkit = koffi.load('/System/Library/Frameworks/AppKit.framework/AppKit');
+  // NSDragPboard is an exported NSString constant, not its string value.
+  // A literal "NSDragPboard" creates a different, empty named pasteboard.
+  const dragBoardName = koffi.decode(appkit.symbol('NSPasteboardNameDrag', 'void *'), 'void *');
   const objc = koffi.load('/usr/lib/libobjc.A.dylib');
   const cls = objc.func('void * objc_getClass(const char *name)');
   const sel = objc.func('void * sel_registerName(const char *name)');
@@ -24,7 +27,7 @@ function createMacDragContext(koffi) {
   function read(reset=false) {
     const pool=send0(send0(poolClass,selectors.alloc),selectors.init);
     try {
-      const board=send1(boardClass,selectors['pasteboardWithName:'],ns('NSDragPboard'));
+      const board=send1(boardClass,selectors['pasteboardWithName:'],dragBoardName);
       const generation=Number(count(board,selectors.changeCount));
       if(reset){baseline=generation;return [];}
       if(baseline===null||generation===baseline)return [];
