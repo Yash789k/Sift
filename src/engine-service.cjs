@@ -3,6 +3,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
 const { Worker } = require('node:worker_threads');
+const { stopOwnedChild } = require('./child-cleanup.cjs');
 const OPERATIONS = new Set(['getCapabilities', 'inspectFiles', 'previewFile', 'convert', 'inspectTools', 'previewTool', 'runTool']);
 const MUTATING = new Set(['convert', 'runTool']);
 const PREVIEWS = new Set(['previewFile', 'previewTool']);
@@ -165,12 +166,8 @@ class EngineService {
   async reapChildren() {
     const pids = [...this.children];
     await Promise.all(pids.map(async pid => {
-      try { process.kill(pid); } catch (error) { if (error.code === 'ESRCH') { this.children.delete(pid); return; } }
-      for (let attempt = 0; attempt < 50; attempt++) {
-        try { process.kill(pid, 0); } catch (error) { if (error.code === 'ESRCH') { this.children.delete(pid); return; } }
-        if (attempt === 20) { try { process.kill(pid, 'SIGKILL'); } catch {} }
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
+      try { if (await stopOwnedChild(pid)) { this.children.delete(pid); return; } }
+      catch { /* Keep ownership and fail closed if native cleanup cannot confirm exit. */ }
       this.record('child-cleanup-unconfirmed');
     }));
     if (this.children.size) throw serviceError('An encoder could not be stopped safely. Close it before quitting Sift.', 'CLEANUP_FAILED');
