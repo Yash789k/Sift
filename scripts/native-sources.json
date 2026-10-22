@@ -3197,7 +3197,8 @@
     "sha256": "2a529f5da6732bd9b573bd128a31947fab919fb680796bccd6b22ba44ef068d4",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "c80c032db76c669819da16f29efdba1eddf5616bac74e0afa74dd46d9fa33fbd"
   },
   {
     "file": "skia-expat.tar.gz",
@@ -3205,7 +3206,8 @@
     "sha256": "f57a102e54da60a4be00f1190b5adb9fdd63658bcac35db884276eebb0436022",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "18f7f00c5d8bd707439ad04398c2cdaa8c52748563bb1380839f17f2de7e924d"
   },
   {
     "file": "skia-freetype.tar.gz",
@@ -3213,7 +3215,8 @@
     "sha256": "ebfaa41eb5ecd18855de02dd5700dfd113057000ee2a36c4b4f35bfdc12c933a",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "2f18f2965ea9272347d8a9f14d1b3808b6fc14ba0a82d6e11d9ef9032140f629"
   },
   {
     "file": "skia-harfbuzz.tar.gz",
@@ -3221,7 +3224,8 @@
     "sha256": "42eddb992f29a337af68febe5b17db0bc56cf12b066bc6d473fad7246d899727",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "d3edb79241c8ec4055bbb56294d1b14629717edd26a00ad84b9ed901e81d6bd2"
   },
   {
     "file": "skia-highway.tar.gz",
@@ -3229,7 +3233,8 @@
     "sha256": "1b2448c7d72b72b6dee4193954278af168962f1dfc1892af1bc4db117329d26e",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "07350c7a4ff0a14996f3af9534485231b901eab4193f4573994cc81e2183654b"
   },
   {
     "file": "skia-icu.tar.gz",
@@ -3237,7 +3242,8 @@
     "sha256": "3c96aee62c52590ace9addf0f78755d5a73060bd35034682dd6a11e64ce31951",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "9825f707fd14618264ba1e070f5952bccbaa65b80cc2c0053c5123930ab4a63a"
   },
   {
     "file": "skia-libjpeg-turbo.tar.gz",
@@ -3245,7 +3251,8 @@
     "sha256": "28adde8db3dbe89d8e77db1a544d89584d050559ebcefd03d90309c34414f5d7",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "a007b1b27c4cdae2b979746deff28e25781f5ed3c053420fcdaac513609e7710"
   },
   {
     "file": "skia-libjxl.tar.gz",
@@ -3253,7 +3260,8 @@
     "sha256": "2f1c6aae87a297c484968e1bdd6bea7f70e2bdfb8de9982e5d7c2068fd17f421",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "ac03f383ac03c1df724cd8265399ee3be264ab1b1162a4c6d26df6e60a7e1787"
   },
   {
     "file": "skia-libpng.tar.gz",
@@ -3261,7 +3269,8 @@
     "sha256": "52110607bfe5af7407aa8d503c45d1e2cf41f529ba889db25b1778cfbc3bc0f5",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "5c261d8354b0f6f3965a2c8ce34c2f8421aa58962c63a566ac1688435b41b8f7"
   },
   {
     "file": "skia-libwebp.tar.gz",
@@ -3269,7 +3278,8 @@
     "sha256": "11e8e434a3fc0be3580c14c4c8c22babc5748191aa50af932d688b2efde0306d",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "2cd66705edb641d0e495875f49c6e7e5d5004f798e8b5c59efed613952b32575"
   },
   {
     "file": "skia-wuffs.tar.gz",
@@ -3277,7 +3287,8 @@
     "sha256": "5d05191d928f73ccb1016c7aa1ff8c7b52a64f56f0d6b1f7cca8a4305c4c650c",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "e1cdf16650725aed70f7bcae04378df68644dbda04172c301d0ee4e4ad24587e"
   },
   {
     "file": "skia-zlib.tar.gz",
@@ -3285,7 +3296,8 @@
     "sha256": "17361d53c3d7c4c99c8800fcfe919b657f0e99ff61db7132105b6166e4089e8d",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "4a1864409c05fbfc7866b91128ef69f4c54ccd7db7932cb0bae162f801741d52"
   },
   {
     "file": "skia-piex.tar.gz",
@@ -3293,7 +3305,8 @@
     "sha256": "8d29e12aaf0f2b49be57a1846d7430a71816cbcf3fd582ceb8b713e3d5cd0c93",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "8e7710a33604cd1e2d18fdb19f5c948cd3b546ec746098fda466ab299668330a"
   },
   {
     "file": "skia-dng_sdk.tar.gz",
@@ -3301,7 +3314,8 @@
     "sha256": "5a72b89ea18a8519880b1d8c49f1c50760c6483d19440ad348e11ed60bce6617",
     "groups": [
       "native"
-    ]
+    ],
+    "contentSha256": "5f26692534c67cb5ff368b20435f5ec0ac597a0b940c813cc0f734a342240b63"
   },
   {
     "file": "canvas-notices-aho-corasick-1.1.5.tar.gz",

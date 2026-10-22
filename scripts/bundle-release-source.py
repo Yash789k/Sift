@@ -1,11 +1,11 @@
 """Create the source companion from the same commit and locked dependency archives."""
-import hashlib
 import json
 import pathlib
 import shutil
 import subprocess
 import sys
 import tarfile
+from source_integrity import verify
 
 root = pathlib.Path(__file__).resolve().parent.parent
 downloads = pathlib.Path(sys.argv[1]).resolve()
@@ -21,8 +21,7 @@ for name in ['scripts/codecs/sources.json', 'scripts/native-sources.json']:
     manifest.extend(json.loads((root / name).read_text()))
 for item in manifest:
     source = downloads / item['file']
-    if hashlib.sha256(source.read_bytes()).hexdigest() != item['sha256']:
-        raise ValueError(f"Source checksum mismatch: {source.name}")
+    item['sha256'] = verify(source, item)
     shutil.copyfile(source, archives / source.name)
 (stage / 'SOURCE-MANIFEST.json').write_text(json.dumps(manifest, indent=2) + '\n')
 subprocess.run(['git', 'archive', '--format=tar.gz', '-o', str(stage / 'Sift-source.tar.gz'), 'HEAD'], cwd=root, check=True)

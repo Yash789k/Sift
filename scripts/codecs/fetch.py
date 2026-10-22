@@ -1,10 +1,12 @@
 """Fetch locked source archives; keep the same files for the release source bundle."""
 import concurrent.futures
-import hashlib
 import json
 import pathlib
 import subprocess
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+from source_integrity import verify
 
 manifest_path = pathlib.Path(sys.argv[3]) if len(sys.argv) > 3 else pathlib.Path(__file__).with_name('sources.json')
 manifest = json.loads(manifest_path.read_text())
@@ -18,9 +20,7 @@ def fetch(item):
         temporary = target.with_suffix(target.suffix + '.part')
         subprocess.run(['curl', '--fail', '--location', '--retry', '3', '--silent', '--show-error', '--max-time', '180', item['url'], '-o', str(temporary)], check=True)
         temporary.replace(target)
-    digest = hashlib.sha256(target.read_bytes()).hexdigest()
-    if digest != item['sha256']:
-        raise ValueError(f"Source checksum mismatch: {target.name}")
+    verify(target, item)
     print(f"Verified {target.name}", flush=True)
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
