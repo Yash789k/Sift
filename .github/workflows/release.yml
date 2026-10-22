@@ -1,0 +1,68 @@
+name: Build installers
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/release-installers]
+permissions:
+  contents: read
+concurrency:
+  group: installers-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ffmpeg:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: macos-arm64
+          - os: windows-latest
+            target: windows-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - if: runner.os == 'macOS'
+        run: brew install nasm pkg-config
+      - if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            make diffutils python curl tar autoconf automake libtool
+            mingw-w64-x86_64-gcc mingw-w64-x86_64-pkgconf mingw-w64-x86_64-nasm
+      - if: runner.os == 'macOS'
+        run: bash scripts/codecs/build-ffmpeg.sh "$RUNNER_TEMP/ffmpeg"
+      - if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: bash scripts/codecs/build-ffmpeg.sh "$(cygpath -u "$RUNNER_TEMP")/ffmpeg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-${{ matrix.target }}
+          path: |
+            ${{ runner.temp }}/ffmpeg/result
+            ${{ runner.temp }}/ffmpeg/sources
+          if-no-files-found: error
+          retention-days: 14
+  heic:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool pkg-config
+      - name: Install pinned Emscripten SDK
+        run: |
+          git clone --depth 1 --branch 3.1.61 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install 3.1.61
+          "$RUNNER_TEMP/emsdk/emsdk" activate 3.1.61
+      - name: Build HEIC encoder from source
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          bash scripts/codecs/build-heic.sh "$RUNNER_TEMP/heic"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: heic
+          path: |
+            ${{ runner.temp }}/heic/result
+            ${{ runner.temp }}/heic/sources
+          if-no-files-found: error
+          retention-days: 14
