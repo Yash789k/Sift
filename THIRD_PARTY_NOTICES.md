@@ -20,7 +20,7 @@ Sift's original source and project-created assets are licensed GPL-3.0-or-later;
 | kvazaar in elheif WASM | Exact embedded revision unverified | BSD-3-Clause | [kvazaar LICENSE](https://github.com/ultravideo/kvazaar/blob/master/LICENSE) |
 | Koffi | 2.14.1 | MIT | [Koromix/koffi](https://github.com/Koromix/koffi) |
 | ffmpeg-static | 5.3.0 | GPL-3.0-or-later | [eugeneware/ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) |
-| @electron/packager (build tool) | 18.3.6 | BSD-2-Clause | [electron/packager](https://github.com/electron/packager) |
+| electron-builder (build tool) | 26.15.3 | MIT; downloaded packaging/signing tools have their own notices | [electron-userland/electron-builder](https://github.com/electron-userland/electron-builder) |
 
 The installed Windows FFmpeg binary is 6.1.1-essentials_build-www.gyan.dev, GPLv3-or-later. Its ffmpeg.exe.LICENSE and ffmpeg.exe.README are beside the executable. The README points to [FFmpeg e38092ef93](https://github.com/FFmpeg/FFmpeg/commit/e38092ef93) and lists the static build configuration. Exact FFmpeg/libheif and other native dependency source obligations remain a public-binary release gate; see DISTRIBUTION.md. Licensing the Sift app under GPL does not replace those obligations.
 

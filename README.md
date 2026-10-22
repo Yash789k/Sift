@@ -1,50 +1,50 @@
 # Sift
 
-Sift 0.2 is an offline desktop file converter with a transparent circular wheel and compact image tools. It is an independent, original implementation inspired by [Tangerine](https://www.tangerineformac.com/), for Windows and macOS. **No API keys, accounts or conversion server are required.**
+Sift 0.3 is an offline file converter that stays in the Windows notification area or macOS menu bar. Its circular wheel and compact editors appear when needed. It is an independent, original implementation inspired by [Tangerine](https://www.tangerineformac.com/). **No API keys, accounts, Node.js installation or conversion server are needed to use a packaged app.**
 
-The **physical Windows drag + Shift workflow is user-verified**. Windows checks pass 68 automated tests, 13 actual-Electron UI checks and seven main-process lifecycle checks. The wheel includes a visible Tools/Formats switch. Desktop output icons are refreshed and positioned near their originals, with actual shell-coordinate readback and unchanged file hashes verified for five existing outputs and a fresh conversion. **macOS hardware behavior remains unverified**, including Apple Silicon. This is an unsigned development build; CI has not yet run.
+## Install
 
-## Run from source
+### Windows 10/11, x64
 
-Use Node.js **22.12 or newer** on the target OS and architecture:
+1. Run `Sift-0.3.0-windows-x64-setup.exe` from the local build handoff.
+2. Sift installs for your Windows account and starts quietly. Look for its icon in the notification area; Windows may put it under **Show hidden icons**.
+3. Open the icon's menu and choose **Convert files…**, **Current jobs…** or **Settings…**.
 
-```sh
-npm ci
-npm run setup
-npm start
-```
+The installer includes Electron, the conversion engine and its native dependencies. It needs no administrator account or console window. The standard location is `%LOCALAPPDATA%\Programs\sift-desktop\Sift.exe`; Windows can redirect its per-user Programs folder. A Start-menu shortcut is created. Opening Sift again keeps one background instance.
 
-Setup downloads dependencies and Electron. Conversions run locally afterward. Windows also needs the .NET Framework C# compiler at its standard Windows location; `npm start` builds the small Explorer selection helper automatically. `Start Sift.cmd` launches an installed Windows checkout.
+**Launch at login is off until you enable it** in Settings or the tray menu. Settings reads the operating system's actual registration/approval state. If Windows Startup apps has disabled Sift, it reports that state.
 
-On an Apple Silicon Mac, extract the source ZIP into a local folder, install Node.js 24 for macOS ARM64, and open `Start Sift.command`. It installs missing dependencies and opens the wheel. The launcher can also be run as `zsh "Start Sift.command"` in Terminal. Install dependencies on the Mac itself; the source ZIP contains no Windows binaries. Use the menu-bar item **Enable drag shortcut access…**, grant Sift/Electron Input Monitoring in System Settings, then quit and reopen the app. Verify a Finder JPG drag with Shift and a WEBP drop before considering macOS activation tested.
+The local Windows installer is unsigned unless signing credentials were explicitly supplied at build time. This repository does not provide a public download or claim a trusted publisher signature.
 
-```sh
-npm test
-npm run package
-```
+### macOS 13 or later
 
-Packaging builds **only the current OS and CPU architecture**, so installed native libraries match the result. Output is `dist/Sift-win32-<arch>/` or `dist/Sift-darwin-<arch>/Sift.app`. Do not copy Windows node_modules to a Mac. Keep the full packaged folder together.
+Choose the `arm64` DMG for an Apple Silicon Mac or `x64` for an Intel Mac. Open `Sift-0.3.0-macos-<arch>.dmg`, drag **Sift.app** into **Applications**, eject the disk image, then open Sift. It runs in the menu bar without a Dock icon.
 
-CI is configured for `windows-latest`, `macos-15` and `macos-15-intel`, using Node 24. It tests and builds without uploading binary artifacts; configuration is not evidence that those builds passed.
+For drag shortcuts, use **Settings → Open shortcut access…**, enable Sift under **System Settings → Privacy & Security → Input Monitoring**, then quit and reopen Sift. Manual **Convert files…** remains available. Launch at login is optional; macOS may require approval under **General → Login Items**.
 
-## Use the wheel
+**The macOS build and hardware workflow still require verification on a Mac.** The local default uses an ad-hoc signature, which does not establish Developer ID/Gatekeeper trust or notarization. A signed, notarized release is a separate build step described in [DISTRIBUTION.md](DISTRIBUTION.md). No Mac runtime pass is claimed.
 
-1. Open Sift from the tray/menu bar or press **Ctrl+Alt+Space** on Windows, **Command+Option+Space** on macOS.
-2. Click the center or use **Ctrl+O / Command+O** to choose a file.
-3. Click a format wedge to create an output. For image tools, click **Tools ›** in the center well; **Formats ›** returns to conversions. **Tab** and right-click also switch.
-4. In a compact editor, adjust the real preview and apply. Reveal the saved result from the success notice.
+## Use Sift
 
-The switch preserves your selected files. Use arrow keys to move among wedges, the center and the switch; **Enter** or **Space** activates a focused control. Dragging a file across the switch does not change modes.
+- **Convert files…** chooses files and opens the format wheel. In an open wheel, **Ctrl+O / Command+O** also chooses files.
+- Drag files from Explorer/Desktop on Windows or Finder on macOS, hold **Shift**, and drop on a format. Hold **Alt** on Windows or **Command** on macOS for tools.
+- Click **Tools ›** in the center well for Crop, Add BG and the other image tools; **Formats ›** returns to conversion. **Tab** or right-click also switches. The switch preserves selected files.
+- **Current jobs…** shows progress, cancellation, errors and saved results. Closing a window leaves the background utility running; use **Quit Sift** to exit.
+- **Ctrl+Alt+Space / Command+Option+Space** opens the wheel manually. Arrow keys navigate its controls; **Enter** or **Space** activates the focused control. **Escape** cancels an active wheel operation, returns from an editor or hides the wheel.
 
-Drag files from File Explorer/Desktop on Windows or a file source on macOS, then hold **Shift** for formats. Hold **Alt** on Windows or **Command** on macOS for tools. Drop directly on a target. The user confirmed the Windows file-drag conversion path; macOS activation still needs target-machine verification. On macOS, use **Enable drag shortcut access…** in the menu to request OS Input Monitoring access, then reopen Sift after granting it. The adapter checks the native drag pasteboard for files.
+Outputs save **beside each original**. Existing names get suffixes and originals are preserved. Settings can choose a destination or restore **Use original folder**. **Open output folder** and result links reveal saved files.
 
-The Windows source guard excludes browser/text/dialog drags and OS window move/resize loops. Explorer marquee selection or another in-content mouse drag may still briefly open the wheel when a modifier is held: window-class eligibility and advisory selection context cannot establish a genuine file drag. **No conversion occurs without a real file drop or explicit file selection.** This remains a physical-testing limitation.
+Windows saves notify Explorer. For Desktop sources, including a redirected OneDrive Desktop, a helper also tries a free icon position near the original without moving other icons or changing Auto arrange/Hide icons settings. If Windows controls placement or no slot is available, the output remains saved. Finder handles macOS icons normally.
 
-**Escape** cancels an active operation, returns from an editor, or hides the wheel. Closing/hiding leaves Sift available in the tray/menu bar; **Quit Sift** exits and stops detection.
+Windows physical file drag and source-adjacent conversion were user-verified in the previous wheel build. The source guard excludes browser/text/dialog drags and window move/resize loops. Explorer marquee selection may still briefly open a wheel when a modifier is held; no conversion occurs without a file drop or explicit selection. The new lazy startup path has automated desktop coverage; a fresh physical drag check on each release remains part of platform acceptance.
 
-Outputs save **beside each original** by default. Existing names receive suffixes; originals are preserved. The tray/menu item **Save beside originals** restores this default if a custom destination was previously selected.
+## Update or remove
 
-On Windows, successful saves notify Explorer immediately. For Desktop sources, including a redirected OneDrive Desktop, Sift also places the new icon in a free grid slot near its original. This runs separately from conversion and does not delay the saved result. The helper preserves other icons, selection and focus, and stays within the source monitor's work area. If Auto arrange is enabled, desktop icons are hidden, or no nearby slot is available, Windows keeps control of placement; Sift does not change those settings. macOS uses Finder's normal file/icon handling.
+There is **no automatic updater**. Quit Sift, then run the newer Windows installer, or replace the app in Applications from a newer Mac DMG. Keep the application name/ID and the Windows account unchanged to retain settings. The installer preserves opt-in login registration during upgrades.
+
+On Windows, use **Settings → Apps → Installed apps → Sift → Uninstall**. Removal deletes the installed application and its Sift login registration. On macOS, turn off **Launch at login** in Sift, quit it, then move **Sift.app** from Applications to Trash. Check macOS Login Items if removing an app that no longer launches.
+
+Converted files are retained. Preferences, local logs and recent output records are retained too, at `%APPDATA%\Sift` on Windows or `~/Library/Application Support/Sift` on macOS. Remove that specific folder only if you also want to erase Sift's local state.
 
 ## Formats
 
@@ -77,9 +77,37 @@ Editors operate on the first frame/page. Supported GIF/WebP conversion can prese
 
 ## Local state and privacy
 
-Preferences and up to 30 recent output records are stored in Electron's user-data directory. History includes file locations; keep it out of source archives and bug reports. The `--demo` flag uses separate local demonstration state.
+Preferences, recent output records and bounded diagnostic logs stay in Electron's user-data directory. History and errors can include file locations; review them before sharing a bug report and exclude them from source archives. Settings offers **Open local logs**. The `--demo` flag uses separate demonstration state.
 
 Native detection reads modifier/button state and pointer location. Windows reads source-window class and Explorer selection context; macOS checks the file drag pasteboard. Files are not uploaded. Bounded local gesture diagnostics record transition events, not typed text, filenames, window titles or pointer coordinates. Disable **Drag shortcuts** or quit Sift to stop detection.
+
+## Build from source
+
+Use Node.js **22.12 or newer** (Node 24 recommended) on the target OS and CPU architecture:
+
+```sh
+npm ci
+npm run setup
+npm start
+```
+
+Development startup also stays in the tray/menu bar; login registration is available only in a packaged app. Dependencies and Electron download during setup. Conversions run locally afterward. Windows needs the standard .NET Framework C# compiler for its small Explorer helper; the packaged installer already includes that helper. Mac builds need Xcode Command Line Tools.
+
+```sh
+npm test
+npm run test:desktop
+npm run check:package
+npm run package:dir
+npm run package
+```
+
+`package:dir` creates an unpacked app for testing. `package` creates a Windows per-user NSIS installer or a macOS DMG with the app bundle. Neither publishes files. Output is under `dist/`: `win-unpacked/Sift.exe`, `Sift-<version>-windows-x64-setup.exe`, or a `mac[-arm64]/Sift.app` and `Sift-<version>-macos-<arch>.dmg`.
+
+Build Windows x64 on Windows x64, Apple Silicon on an ARM64 Mac, and Intel on an Intel Mac. The wrapper rejects cross-architecture builds to keep Sharp, canvas, Koffi and FFmpeg matched to the host. Windows ARM64 is not a native build target because the current FFmpeg package lacks that binary. Do not copy Windows `node_modules` to a Mac. The source launchers remain developer conveniences; end users use the installer/app.
+
+CI is configured for Windows x64, Apple Silicon and Intel Mac runners. It installs, tests and builds without artifact uploads. CI configuration, an installer file and a code signature are not substitutes for target-machine runtime checks. See [DISTRIBUTION.md](DISTRIBUTION.md) for signing, notarization and the public-binary release boundary.
+
+`test:desktop` runs the real main process, preload, renderer and conversion worker in Electron. Fixtures replace native file-picker and Quit-confirmation choices; it does not simulate an Explorer/Finder drag. It needs a desktop session. The 0.3 Windows revision passed **95 automated tests** and **seven Electron integration scenarios** covering silent startup, closing/reopening windows, conversion/tool outputs, collisions, damaged input, duplicate jobs and safe Quit. The packaged Windows executable passed the same scenarios plus a real startup registration/readback/removal test. Startup was restored to off. macOS hardware verification and a fresh physical drag check of the lazy startup path remain outstanding; configured CI is not evidence of a remote pass.
 
 ## License and publishing
 

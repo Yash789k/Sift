@@ -1,15 +1,20 @@
 {
   "name": "sift-desktop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
-  "description": "An offline radial file converter for Windows and macOS. Drag, Shift, drop.",
+  "description": "An offline background file converter for Windows and macOS. Drag, Shift, drop.",
+  "author": "Sift contributors",
   "main": "src/main.cjs",
   "scripts": {
     "setup": "node node_modules/electron/install.js",
     "start": "electron .",
     "pretest": "node scripts/build-native.cjs",
     "test": "node --test tests/*.test.cjs",
+    "pretest:desktop": "node scripts/build-native.cjs",
+    "test:desktop": "electron tests/background.electron.cjs",
     "package": "node scripts/package.cjs",
+    "package:dir": "node scripts/package.cjs --dir",
+    "check:package": "node scripts/package.cjs --check",
     "build:native": "node scripts/build-native.cjs",
     "prestart": "node scripts/build-native.cjs"
   },
@@ -30,8 +35,8 @@
     "sharp": "0.35.5"
   },
   "devDependencies": {
-    "@electron/packager": "18.3.6",
-    "electron": "44.9.1"
+    "electron": "44.9.1",
+    "electron-builder": "26.15.3"
   },
   "license": "GPL-3.0-or-later"
 }

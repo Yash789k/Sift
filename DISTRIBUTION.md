@@ -4,7 +4,39 @@
 
 Prepare a clean local source repository/archive for the user to publish. This task does not create a public GitHub repository, upload release files, or assert a public release exists. CI may test/build Windows and macOS, but must not upload public binary artifacts while the binary-source obligations below remain unresolved.
 
-The source archive includes Sift source, package manifests/lockfile, build scripts, tests with synthetic fixtures, project-created sample assets, LICENSE, and these documentation files. Exclude node_modules, Electron/FFmpeg executables, installed packages, portable builds, user profiles, history, logs, absolute-path evidence, private screenshots, secrets, and intermediate work. npm ci and npm run setup obtain third-party dependencies for each recipient's local build.
+The source archive includes Sift source, package manifests/lockfile, build configuration/scripts, tests with synthetic fixtures, project-created sample assets, LICENSE, and these documentation files. Exclude node_modules, Electron/FFmpeg executables, installed packages, installers/portable builds, user profiles, history, logs, absolute-path evidence, private screenshots, secrets, and intermediate work. npm ci and npm run setup obtain third-party dependencies for each recipient's local build.
+
+## Local installer builds
+
+Sift 0.3 uses pinned electron-builder 26.15.3 as a development dependency. `npm run check:package` validates its configuration without building; `npm run package:dir` creates an unpacked app, and `npm run package` creates a Windows NSIS installer or Mac DMG. The wrapper always sets `publish: never`, while the configuration sets `publish: null`. There is no automatic updater or release upload step.
+
+Build on the actual target OS and CPU architecture with Node 22.12+ (Node 24 recommended). Windows x64 and macOS arm64/x64 are supported build targets. Native Windows ARM64 is rejected because ffmpeg-static 5.3.0 does not supply that binary. Windows requires the standard .NET Framework C# compiler to build SelectionProbe; macOS requires Xcode Command Line Tools. Install dependencies on each target; cross-copying node_modules does not produce a valid native build.
+
+The app includes its production dependencies, native libraries, FFmpeg, HEIC worker and WASM payload. ASAR is disabled to preserve filesystem paths for those executables/workers. Automatic native rebuilding is disabled because the pinned native packages provide platform-specific prebuilt binaries; clean target-host installation and packaged runtime checks remain required. Build scripts, tests, private profiles and dist outputs are excluded from the app through an explicit allowlist.
+
+Windows uses a one-click, per-user installer with no elevation helper or administrator request. Its stable app ID is `org.siftconverter.desktop`; the product and Start-menu name are Sift. The standard installation path is `%LOCALAPPDATA%\Programs\sift-desktop`, respecting Windows' per-user Programs known folder and an existing installation. The app is an `asInvoker` GUI executable. Resource editing remains enabled for the icon and version metadata. No startup registration is added by installation; Sift's setting is opt-in. An upgrade keeps the existing registration. A true uninstall removes only the `org.siftconverter.desktop` value under the current user's Run and StartupApproved/Run keys and the application files, while retaining local state and converted outputs.
+
+macOS builds have bundle ID `org.siftconverter.desktop`, `LSUIElement=true` and minimum system version 13.0. The DMG contains Sift.app and an Applications link. There is no PKG installer, privileged helper or system service. Login at launch uses Electron's main-app service after user opt-in; verify its actual OS approval state. Default local builds use an explicit ad-hoc signature with hardened runtime disabled, solely to support local development. Ad-hoc signing is not a Developer ID signature, notarization, or a Gatekeeper-trusted release. **Mac package creation and runtime behavior have not yet been verified on Mac hardware.**
+
+## Optional signing and notarization
+
+Credentials are not included or currently available. Configure these variables in the build environment or a secret store; never commit certificates, passwords or API keys. Normal local commands do not submit an app to Apple or any release host.
+
+For Windows, set `SIFT_SIGN=1` and electron-builder's `WIN_CSC_LINK` (certificate file/base64) with `WIN_CSC_KEY_PASSWORD`, or its generic `CSC_LINK`/`CSC_KEY_PASSWORD` equivalents. A suitable Windows signing certificate/provider is required. `SIFT_SIGN=1` enables `forceCodeSigning`, so missing signing credentials fail the build instead of silently producing an unsigned release. Verify the final installer and executable Authenticode signatures on Windows; no successful signing run is claimed here.
+
+For a signed Mac build, set `SIFT_SIGN=1` and a **Developer ID Application** certificate through `CSC_LINK` and `CSC_KEY_PASSWORD`, or a matching keychain identity through `CSC_NAME`. The signed path enables hardened runtime and the project's JIT/executable-memory entitlements; FFmpeg is explicitly included among signed binaries. Verify nested native modules and the final bundle, not only the outer app. The identity, entitlements and third-party binaries require an actual signed Mac test.
+
+Notarization is a separate, explicit opt-in: set **both** `SIFT_SIGN=1` and `SIFT_NOTARIZE=1` on a Mac. This submits the signed app to Apple. Supply one complete authentication set:
+
+- `APPLE_API_KEY` (absolute path to the .p8 file), `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`.
+- `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`.
+- `APPLE_KEYCHAIN_PROFILE`, with `APPLE_KEYCHAIN` if a non-default keychain is needed.
+
+The wrapper rejects incomplete notarization credentials and never prints their values. Electron-builder's notarization integration submits and staples the app; verify the result with `codesign --verify --deep --strict --verbose=2`, `xcrun stapler validate` and `spctl --assess --type execute --verbose=2` against the final Sift.app. Run the app from a fresh Mac user account with the delivered DMG before marking it release-ready. Signing/notarization does not resolve dependency licensing or constitute runtime verification. [Pinned builder signing options](https://github.com/electron-userland/electron-builder/blob/electron-builder%4026.15.3/packages/app-builder-lib/src/options/macOptions.ts), [Electron notarization](https://github.com/electron/notarize), [Apple notarization guidance](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution).
+
+## Required packaged-app verification
+
+For each installer/architecture, verify fresh install, quiet first/second launch, tray/menu access, optional login enable/disable and an actual login cycle, conversion after the window closes, progress/cancel/error behavior, restart, upgrade and removal. Confirm originals and exports survive removal and that Sift does not remain in login registration. Test Windows source-adjacent Desktop outputs and actual Finder drag/Input Monitoring on the user's Apple Silicon Mac. Check the app's OS minimum on a supported target. CI is configured for Windows, Apple Silicon and Intel Mac, but configured workflows are not executed results. Public artifacts remain disabled pending the license audit below.
 
 ## Sift source license
 

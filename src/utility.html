@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'none'; object-src 'none'; frame-src 'none'">
+  <title>Sift</title><link rel="stylesheet" href="utility.css">
+</head>
+<body>
+  <header>
+    <div class="brand"><img src="icon.png" alt="" width="30" height="30"><span>Sift</span><span class="status-dot" aria-hidden="true"></span><small id="app-status">Ready in the background</small></div>
+    <nav aria-label="Utility views"><button id="jobs-tab" aria-current="page">Current jobs</button><button id="settings-tab">Settings</button></nav>
+  </header>
+  <main>
+    <p id="error" role="alert" hidden></p>
+    <section id="jobs-view" aria-labelledby="jobs-heading">
+      <div class="section-heading"><div><h1 id="jobs-heading">Your files, handled.</h1><p>Conversions stay on your device.</p></div><button id="convert" class="primary">Convert files…</button></div>
+      <div id="empty" class="empty"><span class="empty-ring" aria-hidden="true">✓</span><h2>All clear</h2><p>Choose files, or drag a file and hold Shift<br>to bring up the wheel.</p></div>
+      <div id="jobs" aria-label="Conversion jobs"></div>
+      <p id="job-announcement" class="sr-only" role="status" aria-live="polite"></p>
+    </section>
+    <section id="settings-view" aria-labelledby="settings-heading" hidden>
+      <h1 id="settings-heading">Make yourself at home.</h1><p class="intro">Sift stays in the tray or menu bar when you close this window.</p>
+      <div class="card settings-card">
+        <label class="setting" for="startup"><span><strong>Launch at login</strong><small id="startup-status">Reading system status…</small></span><input id="startup" type="checkbox" role="switch" disabled></label>
+        <label class="setting" for="gesture"><span><strong>Drag shortcuts</strong><small id="gesture-hint">Hold Shift while dragging for formats.</small></span><input id="gesture" type="checkbox" role="switch"></label>
+        <div id="mac-permission" class="permission" hidden><p>Enable Input Monitoring for Sift in System Settings to use drag shortcuts.</p><button id="gesture-access" class="subtle">Open shortcut access…</button></div>
+      </div>
+      <div class="card destination"><strong>Save converted files</strong><p id="output-path">Beside the originals</p><div class="actions"><button id="choose-output" class="subtle">Choose folder…</button><button id="reset-output" class="text-button">Use original folder</button></div><small>Originals stay untouched. Existing outputs get a new name.</small></div>
+      <div class="card quiet-note"><strong>Local by design</strong><p>No account, uploads or conversion server. Your recent output paths and diagnostic logs are stored only on this device.</p><button id="logs" class="text-button">Open local logs</button></div>
+      <p id="version" class="version"></p>
+    </section>
+  </main>
+  <footer><button id="open-output" class="text-button">Open output folder</button><button id="hide" class="subtle">Done</button></footer>
+  <script src="utility.js"></script>
+</body>
+</html>
