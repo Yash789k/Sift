@@ -8,7 +8,7 @@ This document is for maintainers. Signing, building and providing corresponding 
 
 ## Release contents and verification
 
-Release version 0.3.2 targets **macOS 13+ / Apple Silicon** and **Windows 11 / x64**. The release workflow builds each native executable on its target OS. It rebuilds FFmpeg and the HEIC encoder from locked, checksum-verified source archives, replaces the development npm payloads, records the resulting binary hashes and verifies those hashes before packaging. Normal local packaging remains separate from release publication.
+Release version 0.3.2 targets **macOS 13+ / Apple Silicon** and **Windows 11 / x64**. The release workflow builds each native executable on its target OS. It rebuilds FFmpeg and the HEIC encoder from locked, checksum-verified source archives (content hashes for upstream archives with variable timestamps), replaces the development npm payloads, records the resulting binary hashes and verifies those hashes before packaging. Normal local packaging remains separate from release publication.
 
 Every public release must contain:
 
@@ -29,7 +29,7 @@ The app includes its production dependencies, native libraries, FFmpeg, HEIC wor
 
 Windows uses a one-click, per-user installer with no elevation helper or administrator request. Its stable app ID is `org.siftconverter.desktop`; the product and Start-menu name are Sift. The standard installation path is `%LOCALAPPDATA%\Programs\sift-desktop`, respecting Windows' per-user Programs known folder and an existing installation. The app is an `asInvoker` GUI executable. Resource editing remains enabled for the icon and version metadata. No startup registration is added by installation; Sift's setting is opt-in. An upgrade keeps the existing registration. A true uninstall removes only the `org.siftconverter.desktop` value under the current user's Run and StartupApproved/Run keys and the application files, while retaining local state and converted outputs.
 
-macOS builds have bundle ID `org.siftconverter.desktop`, `LSUIElement=true` and minimum system version 13.0. The DMG contains Sift.app and an Applications link. There is no PKG installer, privileged helper or system service. Login at launch uses Electron's main-app service after user opt-in; verify its actual OS approval state. Default local builds use an explicit ad-hoc signature with hardened runtime disabled, solely to support local development. Ad-hoc signing is not a Developer ID signature, notarization, or a Gatekeeper-trusted release. The earlier 0.3.1 local Apple Silicon build passed app-signature and DMG integrity checks and packaged image/PDF/audio smoke tests. Those results are historical; every replacement codec and release still needs its own validation.
+macOS builds have bundle ID `org.siftconverter.desktop`, `LSUIElement=true` and minimum system version 13.0. The DMG contains Sift.app and an Applications link. There is no PKG installer, privileged helper or system service. Login at launch uses Electron's main-app service after user opt-in; verify its actual OS approval state. Local and unsigned prerelease builds use an explicit ad-hoc signature with hardened runtime disabled so the app can run on Apple Silicon. Ad-hoc signing is not a Developer ID signature, notarization, or a Gatekeeper-trusted release. The earlier 0.3.1 local Apple Silicon build passed app-signature and DMG integrity checks and packaged image/PDF/audio smoke tests. Those results are historical; every replacement codec and release still needs its own validation.
 
 ## Optional signing and notarization
 

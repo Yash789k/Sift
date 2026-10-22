@@ -12,3 +12,4 @@ Thumbs.db
 build/release-codecs.json
 licenses/
 release-input/
+__pycache__/
