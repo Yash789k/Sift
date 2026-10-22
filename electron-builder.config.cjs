@@ -67,7 +67,7 @@ module.exports = {
     hardenedRuntime: signed,
     entitlements: 'build/entitlements.mac.plist',
     entitlementsInherit: 'build/entitlements.mac.plist',
-    binaries: ['Resources/app/node_modules/ffmpeg-static/ffmpeg'],
+    binaries: ['Contents/Resources/app/node_modules/ffmpeg-static/ffmpeg'],
     notarize,
     artifactName: 'Sift-${version}-macos-${arch}.${ext}',
   },

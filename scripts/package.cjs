@@ -41,6 +41,23 @@ function checkNotarizationEnvironment() {
   }
 }
 
+function verifyBuildArtifacts(artifacts, options) {
+  const out = path.resolve(options.out);
+  if (options.dir) {
+    const executable = options.platform === 'win32' ? path.join(out, 'win-unpacked', 'Sift.exe') :
+      path.join(out, options.arch === 'arm64' ? 'mac-arm64' : 'mac', 'Sift.app', 'Contents', 'MacOS', 'Sift');
+    if (!fs.statSync(executable).isFile()) throw new Error('The packaged application executable is missing.');
+    return [executable];
+  }
+  const version = require('../package.json').version;
+  const name = options.platform === 'win32' ? `Sift-${version}-windows-${options.arch}-setup.exe` : `Sift-${version}-macos-${options.arch}.dmg`;
+  const installer = path.join(out, name);
+  if (!artifacts.some(file => path.resolve(file) === installer)) throw new Error(`The build did not produce ${name}.`);
+  const stat = fs.statSync(installer);
+  if (!stat.isFile() || stat.size === 0) throw new Error(`The built installer is empty or invalid: ${name}.`);
+  return [installer];
+}
+
 async function main() {
   const options = parseOptions(process.argv.slice(2));
   checkConfig();
@@ -66,8 +83,15 @@ async function main() {
     config: { ...config, directories: { ...config.directories, output: path.resolve(options.out) } },
     publish: 'never',
   });
-  console.log('Built Sift locally:', artifacts.join('\n') || path.resolve(options.out));
+  const verified = verifyBuildArtifacts(artifacts, options);
+  console.log('Built and verified Sift locally:', verified.join('\n'));
 }
 
-if (require.main === module) main().catch(error => { console.error(error.message); process.exitCode = 1; });
-module.exports = { parseOptions, checkConfig };
+if (require.main === module) main().catch(error => {
+  console.error(error.message);
+  process.exitCode = 1;
+  // Match electron-builder's CLI: dependency exit hooks can otherwise replace
+  // the failure code and make CI green even when signing or packaging failed.
+  process.on('exit', () => { process.exitCode = 1; });
+});
+module.exports = { parseOptions, checkConfig, verifyBuildArtifacts };
