@@ -48,14 +48,14 @@ unpack x264 x264-31e19f92.tar.gz
 ./configure --prefix="$prefix" --enable-static --enable-pic --disable-cli --disable-opencl
 make -j"$jobs" && make install
 unpack vpx libvpx-1.17.0.tar.gz
-./configure --prefix="$prefix" --enable-pic --disable-shared --disable-examples --disable-tools --disable-docs --disable-unit-tests "${vpx_target[@]}"
+./configure --prefix="$prefix" --enable-pic --disable-shared --disable-examples --disable-tools --disable-docs --disable-unit-tests ${vpx_target[@]+"${vpx_target[@]}"}
 make -j"$jobs" && make install
 unpack ffmpeg ffmpeg-8.1.3.tar.xz
 ./configure --prefix="$prefix" --disable-autodetect --disable-shared --enable-static \
   --disable-doc --disable-debug --disable-network --disable-ffplay --disable-ffprobe \
   --enable-gpl --enable-version3 --enable-libx264 --enable-libvpx --enable-libmp3lame \
   --enable-libopus --enable-libvorbis --pkg-config-flags=--static \
-  --extra-cflags="-I$prefix/include" --extra-ldflags="$LDFLAGS" "${extra[@]}"
+  --extra-cflags="-I$prefix/include" --extra-ldflags="$LDFLAGS" ${extra[@]+"${extra[@]}"}
 make -j"$jobs"
 binary=ffmpeg
 [[ -f ffmpeg.exe ]] && binary=ffmpeg.exe

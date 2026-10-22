@@ -17,10 +17,18 @@ unpack() {
   cd "$work/src/$1"
 }
 unpack kvazaar kvazaar-2.3.2.tar.gz
-./autogen.sh
-emconfigure ./configure --prefix="$prefix" --disable-shared --enable-static --disable-asm --without-crypto
-emmake make -j"$jobs"
-emmake make install
+# Upstream CMake adds this x86-only flag even for Emscripten.
+python3 - <<'PYCODE'
+from pathlib import Path
+p = Path('CMakeLists.txt')
+p.write_text('\n'.join(line for line in p.read_text().splitlines() if '-muse-unaligned-vector-move' not in line) + '\n')
+PYCODE
+emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" \
+  -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTS=OFF \
+  -DBUILD_KVAZAAR_BINARY=OFF -DUSE_CRYPTO=OFF \
+  -DCMAKE_C_FLAGS=-D__EMSCRIPTEN_STANDALONE_WASM__=1
+cmake --build build -j"$jobs"
+cmake --install build
 unpack libheif libheif-1.23.6.tar.gz
 emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$prefix" \
   -DCMAKE_INSTALL_LIBDIR=lib -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_FIND_ROOT_PATH="$prefix" \
