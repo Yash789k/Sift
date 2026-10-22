@@ -143,6 +143,13 @@ function ensureWheel() {
   });
   win = created; lockNavigation(created);
   keepWindowInBackground(created, { isQuitting: () => quitting, onHide: hideWindow });
+  if (process.platform === 'darwin') {
+    created.on('blur', () => {
+      // A manually opened palette behaves like a popover. Finder retains focus
+      // during native drags; editors, dialogs and in-flight work retain theirs.
+      if (!quickMode && !editorOpen && !jobs.current && !nativeDialogOpen && !ingestionInProgress) hideWindow();
+    });
+  }
   created.on('closed', () => { if (win === created) { win = undefined; wheelReady = undefined; } });
   wheelReady = created.loadFile(path.join(__dirname, 'index.html')).then(() => created).catch(error => {
     if (win === created) { win = undefined; wheelReady = undefined; }
@@ -169,7 +176,9 @@ async function showUtility(view = 'jobs') {
   const window = await utilityReady;
   if (quit.isStopping() || window.isDestroyed()) return;
   window.webContents.send('utility-view', { view: utilityView }); publishUtility(true);
-  if (window.isMinimized()) window.restore(); window.show(); window.focus();
+  if (window.isMinimized()) window.restore();
+  if (process.platform === 'darwin') app.focus({ steal: true });
+  window.show(); window.focus();
 }
 async function warmDragContext(input) {
   const epoch = ++contextEpoch; dragContext = undefined;
@@ -207,7 +216,12 @@ function showWheel({ point, kind = 'formats', manual = false, fresh = true, file
     const bounds = boundsAt(point, 400, 400);
     window.setMinimumSize(1, 1); window.setBounds(bounds); window.setAlwaysOnTop(true, 'floating');
     send('mode', { mode: 'wheel', kind: wheelKind, fresh, ...(!manual && dragContext ? { context: dragContext } : {}), ...(files ? { files } : {}) });
-    if (manual) { if (window.isMinimized()) window.restore(); window.show(); } else window.showInactive();
+    if (manual) {
+      if (window.isMinimized()) window.restore();
+      if (process.platform === 'darwin') app.focus({ steal: true });
+      window.show();
+      if (process.platform === 'darwin') window.focus();
+    } else window.showInactive();
     window.setBounds(bounds); recordGesture({ event: 'wheel-shown', kind: wheelKind, visible: window.isVisible() });
   }));
   return true;
@@ -219,7 +233,11 @@ function showEditor({ tool, width = 390, height = 600 } = {}) {
   const old = win.getBounds();
   const bounds = boundsAt({ x: old.x + old.width / 2, y: old.y + old.height / 2 },
     Math.max(360, Math.min(560, Number(width) || 390)), Math.max(420, Math.min(780, Number(height) || 600)));
-  win.setBounds(bounds); win.show(); win.setBounds(bounds); recordGesture({ event: 'editor-shown', tool });
+  win.setBounds(bounds);
+  if (process.platform === 'darwin') app.focus({ steal: true });
+  win.show();
+  if (process.platform === 'darwin') win.focus();
+  win.setBounds(bounds); recordGesture({ event: 'editor-shown', tool });
 }
 function hideWindow() { clearTimeout(releaseTimer); wheelEpoch++; quickMode = false; editorOpen = false; retainedQuick = false; if (win && !win.isDestroyed()) { send('visibility', { visible: false }); win.hide(); } }
 async function presentSuccessToast(summary, token) {
@@ -265,6 +283,7 @@ function setupGesture() {
   });
   recordGesture({ event: 'reader-started', available: stopGesture.available, platform: process.platform });
   send('gesture-status', { available: stopGesture.available });
+  if (process.platform === 'darwin') publishUtility();
 }
 async function openOutput() {
   const directory = state.outputDir || (state.history[0] ? path.dirname(state.history[0].path) : app.getPath('downloads'));
@@ -317,6 +336,8 @@ function rebuildTray() {
     { label: 'Open format wheel', click: () => showWheel({ manual: true }) },
     { label: 'Open tool wheel', click: () => showWheel({ manual: true, kind: 'tools' }) },
     { label: 'Settings…', click: () => runQuietly(showUtility('settings')) },
+    ...(process.platform === 'darwin' && state.gestureEnabled && !stopGesture?.available
+      ? [{ label: 'Enable drag shortcuts…', click: () => runQuietly(openMacShortcutAccess()) }] : []),
     { label: startupState.status === 'requires-approval' ? 'Launch at login — approval required' : 'Launch at login', type: 'checkbox', checked: startupState.enabled || startupState.status === 'requires-approval',
       enabled: startupState.supported, click: item => { try { startupCache = startup.set(item.checked); publishUtility(); rebuildTray(); } catch (error) { report(error); runQuietly(showUtility('settings')); } } },
     { type: 'separator' }, { label: 'Quit Sift', click: () => runQuietly(requestQuit()) },
@@ -365,6 +386,12 @@ function handle(channel, callback, scope = 'wheel') {
     return callback(event, ...args);
   });
 }
+async function openMacShortcutAccess() {
+  if (process.platform !== 'darwin') return;
+  await showUtility('settings');
+  requestMacGestureAccess(); setupGesture(); rebuildTray();
+  if (!stopGesture?.available) await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent');
+}
 handle('state', async () => ({ ...state, platform: process.platform, capabilities: await getCapabilities(), gestureAvailable: stopGesture?.available ?? false }));
 handle('ingestion-begin', () => { if (jobs.current) throw new Error('A file operation is already running.'); completion.cancel(); ingestionInProgress = true; clearTimeout(releaseTimer); });
 handle('ingestion-end', () => { ingestionInProgress = false; retainedQuick = false; });
@@ -394,7 +421,7 @@ handle('utility-action', async (_event, request) => {
     case 'cancel-job': jobs.cancel(request.id); break;
     case 'set-startup': startupCache = startup.set(request.enabled); rebuildTray(); break;
     case 'set-gesture': setGesture(request.enabled); break;
-    case 'gesture-access': if (process.platform === 'darwin') { requestMacGestureAccess(); setupGesture(); } break;
+    case 'gesture-access': await openMacShortcutAccess(); break;
     case 'choose-output': await chooseOutput(utilityWin); break;
     case 'reset-output': state.outputDir = null; saveState(); send('state', state); rebuildTray(); break;
     case 'open-output': await openOutput(); break;
@@ -419,11 +446,21 @@ else {
     const icon = nativeImage.createFromPath(path.join(__dirname, 'tray.png'));
     if (process.platform === 'darwin') icon.setTemplateImage(true);
     tray = new Tray(icon.resize({ width: 20, height: 20 })); rebuildTray();
-    tray.on('click', () => { publishUtility(true); rebuildTray(); showWheel({ manual: true }); });
+    tray.on('click', () => {
+      publishUtility(true); rebuildTray();
+      // macOS opens the assigned menu on this same click. Opening the palette
+      // here leaves it behind that menu without keyboard focus.
+      if (process.platform !== 'darwin') showWheel({ manual: true });
+    });
     tray.on('right-click', () => { publishUtility(true); rebuildTray(); });
     if (!globalShortcut.register('CommandOrControl+Alt+Space', () => showWheel({ manual: true }))) log('shortcut-unavailable');
     if (process.platform === 'darwin') app.dock?.hide();
-    setupGesture(); log('app-started', { version: app.getVersion(), platform: process.platform, packaged: app.isPackaged });
+    setupGesture(); rebuildTray();
+    if (process.platform === 'darwin' && app.isPackaged && state.gestureEnabled && !stopGesture?.available && !state.gesturePermissionRequested) {
+      state.gesturePermissionRequested = true; saveState();
+      requestMacGestureAccess();
+    }
+    log('app-started', { version: app.getVersion(), platform: process.platform, packaged: app.isPackaged });
     await handleLaunchArguments(process.argv);
   }).catch(report);
   app.on('before-quit', event => { if (quit.canExit()) return; event.preventDefault(); runQuietly(requestQuit()); });

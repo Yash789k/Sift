@@ -23,6 +23,8 @@ jobs:
       - run: npm run check:package
       - run: npm run build:native
       - run: npm test
+      - if: runner.os == 'macOS'
+        run: npm run test:mac
       - run: npm run package
       # No binary artifact/release upload. See DISTRIBUTION.md for the
       # corresponding-source requirements before redistributing codec binaries.

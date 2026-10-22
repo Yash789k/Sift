@@ -146,6 +146,8 @@ jobs:
       - run: npm run check:package
       - run: npm test
       - run: npm run test:desktop
+      - if: runner.os == 'macOS'
+        run: npm run test:mac
       - run: npm run package
       - name: Verify Mac disk image and packaged runtime
         if: runner.os == 'macOS'

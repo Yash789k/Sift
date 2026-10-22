@@ -36,10 +36,14 @@ If macOS explicitly reports malware, the download is damaged, or your computer i
 
 ### Optional: enable drag shortcuts
 
-1. Click Sift's menu-bar icon → **Settings… → Open shortcut access…**.
+1. On the first launch, macOS may ask for Input Monitoring access. If you skipped it, click Sift's menu-bar icon → **Enable drag shortcuts…**. You can also use **Settings… → Open shortcut access…**. This registers Sift in the permission list and opens the settings page.
 2. Enable Sift under **System Settings → Privacy & Security → Input Monitoring**.
-3. Quit Sift using its menu, then reopen it from Applications.
-4. Drag a file in Finder, hold **Shift**, and drop it onto a conversion format. Hold **Command** for image tools instead.
+3. Choose **Quit & Reopen** when macOS asks, or quit Sift using its menu and reopen it from Applications.
+4. In Finder, select a file, **hold the mouse button down and start dragging**, then hold **Shift**. The wheel appears around the pointer. Drag onto a format and release the mouse button. Hold **Command** for image tools instead.
+
+Selecting files and pressing Shift without dragging does not open the wheel. You do not need to click Sift's icon before dragging. The menu-bar icon opens its menu; choose **Open format wheel** to open a wheel manually. **Escape** or clicking outside dismisses an idle manually opened wheel. An active editor or conversion keeps its recovery controls.
+
+If dragging still does nothing, check **Settings → Drag shortcuts**. A permission message means macOS has not granted access to this installed copy. Use **Open shortcut access…**, approve Sift and quit/reopen it. An unsigned app update may require granting access to the new copy again. If Sift already looks enabled after an update, switch only Sift off and back on in Input Monitoring, approve the macOS prompt, then quit/reopen it.
 
 You can use **Convert files…** without granting Input Monitoring. Launch at login is also optional. Enable it in Sift's settings; macOS may ask you to approve it in **General → Login Items**.
 
