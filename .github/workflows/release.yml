@@ -78,9 +78,13 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   sources:
+    needs: [ffmpeg, heic]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: release-provenance
       - uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/sources
@@ -90,7 +94,7 @@ jobs:
           python3 scripts/codecs/fetch.py "$RUNNER_TEMP/sources"
           python3 scripts/codecs/fetch.py "$RUNNER_TEMP/sources" all scripts/native-sources.json
           python3 scripts/collect-source-notices.py "$RUNNER_TEMP/sources" "$RUNNER_TEMP/notices"
-          python3 scripts/bundle-release-source.py "$RUNNER_TEMP/sources" "$RUNNER_TEMP/source-output"
+          python3 scripts/bundle-release-source.py "$RUNNER_TEMP/sources" "$RUNNER_TEMP/source-output" release-provenance
           tar czf "$RUNNER_TEMP/source-output/native-notices.tar.gz" -C "$RUNNER_TEMP/notices" .
       - uses: actions/upload-artifact@v4
         with:

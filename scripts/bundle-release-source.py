@@ -10,6 +10,7 @@ from source_integrity import verify
 root = pathlib.Path(__file__).resolve().parent.parent
 downloads = pathlib.Path(sys.argv[1]).resolve()
 destination = pathlib.Path(sys.argv[2]).resolve()
+provenance = pathlib.Path(sys.argv[3]).resolve()
 destination.mkdir(parents=True, exist_ok=True)
 version = json.loads((root / 'package.json').read_text())['version']
 stage = destination / 'corresponding-source'
@@ -24,6 +25,15 @@ for item in manifest:
     item['sha256'] = verify(source, item)
     shutil.copyfile(source, archives / source.name)
 (stage / 'SOURCE-MANIFEST.json').write_text(json.dumps(manifest, indent=2) + '\n')
+for target, names in {
+    'ffmpeg-macos-arm64': ['config.h', 'config.mak', 'ffmpeg-version.txt', 'ffmpeg-license.txt'],
+    'ffmpeg-windows-x64': ['config.h', 'config.mak', 'ffmpeg-version.txt', 'ffmpeg-license.txt'],
+    'heic': ['emscripten-version.txt'],
+}.items():
+    folder = stage / 'build-configuration' / target
+    folder.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        shutil.copyfile(provenance / target / 'result' / name, folder / name)
 subprocess.run(['git', 'archive', '--format=tar.gz', '-o', str(stage / 'Sift-source.tar.gz'), 'HEAD'], cwd=root, check=True)
 commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
 (stage / 'README.txt').write_text(f'''Sift {version} corresponding source
@@ -32,6 +42,8 @@ Sift commit: {commit}
 Sift-source.tar.gz contains the application, lockfile and complete release scripts.
 upstream/ contains the source archives and patches listed in SOURCE-MANIFEST.json.
 Archive checksums identify the precise files; read the included upstream licenses.
+build-configuration/ records the actual FFmpeg configurations and compiler/SDK
+version outputs from the codec builds used in this release.
 
 To rebuild Sift, extract Sift-source.tar.gz and follow CONTRIBUTING.md and
 DISTRIBUTION.md. The .github/workflows/release.yml file records the build hosts
