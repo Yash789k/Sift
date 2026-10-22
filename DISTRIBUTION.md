@@ -2,7 +2,7 @@
 
 ## Current distribution decision
 
-Prepare a clean local source repository/archive for the user to publish. This task does not create a public GitHub repository, upload release files, or assert a public release exists. CI may test/build Windows and macOS, but must not upload public binary artifacts while the binary-source obligations below remain unresolved.
+The public repository distributes Sift source and project-created assets under GPL-3.0-or-later. Public installer releases are not available yet. CI may test/build Windows and macOS, but must not upload public binary artifacts while the binary-source obligations below remain unresolved.
 
 The source archive includes Sift source, package manifests/lockfile, build configuration/scripts, tests with synthetic fixtures, project-created sample assets, LICENSE, and these documentation files. Exclude node_modules, Electron/FFmpeg executables, installed packages, installers/portable builds, user profiles, history, logs, absolute-path evidence, private screenshots, secrets, and intermediate work. npm ci and npm run setup obtain third-party dependencies for each recipient's local build.
 

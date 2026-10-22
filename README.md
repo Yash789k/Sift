@@ -2,11 +2,17 @@
 
 Sift 0.3 is an offline file converter that stays in the Windows notification area or macOS menu bar. Its circular wheel and compact editors appear when needed. It is an independent, original implementation inspired by [Tangerine](https://www.tangerineformac.com/). **No API keys, accounts, Node.js installation or conversion server are needed to use a packaged app.**
 
+![Sift's translucent conversion wheel](docs/wheel.png)
+
+*Sift 0.3.1, captured over a test background. Hold Shift while dragging for formats; use Tools for compression, cropping and other image actions.*
+
 ## Install
+
+**Public installers are not available yet.** This repository contains the source and build configuration. The Windows installer has been tested locally; macOS builds and hardware verification are still pending. Developers can follow [Build from source](#build-from-source). The instructions below apply when you have a locally built installer or app bundle.
 
 ### Windows 10/11, x64
 
-1. Run `Sift-0.3.1-windows-x64-setup.exe` from the local build handoff.
+1. Run your locally built `Sift-0.3.1-windows-x64-setup.exe`.
 2. Sift installs for your Windows account and starts quietly. Look for its icon in the notification area; Windows may put it under **Show hidden icons**.
 3. Open the icon's menu and choose **Convert files…**, **Current jobs…** or **Settings…**.
 
@@ -109,12 +115,12 @@ Build Windows x64 on Windows x64, Apple Silicon on an ARM64 Mac, and Intel on an
 
 CI is configured for Windows x64, Apple Silicon and Intel Mac runners. It installs, tests and builds without artifact uploads. CI configuration, an installer file and a code signature are not substitutes for target-machine runtime checks. See [DISTRIBUTION.md](DISTRIBUTION.md) for signing, notarization and the public-binary release boundary.
 
-`test:desktop` runs the real main process, preload, renderer and conversion worker in Electron. Fixtures replace native file-picker and Quit-confirmation choices; it does not simulate an Explorer/Finder drag. It needs a desktop session. The 0.3 Windows revision passed **95 automated tests** and **seven Electron integration scenarios** covering silent startup, closing/reopening windows, conversion/tool outputs, collisions, damaged input, duplicate jobs and safe Quit. The packaged Windows executable passed the same scenarios plus a real startup registration/readback/removal test. Startup was restored to off. macOS hardware verification and a fresh physical drag check of the lazy startup path remain outstanding; configured CI is not evidence of a remote pass.
+`test:desktop` runs the real main process, preload, renderer and conversion worker in Electron. Fixtures replace native file-picker and Quit-confirmation choices and the final OS reveal boundary; it does not simulate an Explorer/Finder drag. It needs a desktop session. The 0.3.1 Windows revision passed **112 automated tests** and **13 Electron integration scenarios** against both source and the installed app, covering silent startup, closing/reopening windows, conversion/tool outputs, automatic success dismissal, hover audio, collisions, damaged input, duplicate jobs and safe Quit. Actual startup registration/readback/removal passed in 0.3.0, with startup restored to off. macOS hardware verification and a fresh physical drag check of the lazy startup path remain outstanding; configured CI is not evidence of a remote pass.
 
 ## License and publishing
 
 Original Sift source and project-created assets are **GPL-3.0-or-later**: [LICENSE](LICENSE). Dependencies retain their own licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). See [CONTRIBUTING.md](CONTRIBUTING.md) for development and testing.
 
-The source is prepared locally for its owner to publish. The source-only handoff excludes installed dependencies, compiled binaries, private reference screenshots, profiles/history and machine-specific evidence. Each recipient installs dependencies for a local build.
+This repository publishes source and project-created assets. It excludes installed dependencies, compiled binaries, private reference screenshots, profiles/history and machine-specific evidence. Each developer installs dependencies for a local build.
 
 Public compiled releases require the exact dependency notices and corresponding-source materials described in [DISTRIBUTION.md](DISTRIBUTION.md), including GPL FFmpeg and LGPL HEIC components. CI has no binary artifact publishing step while that audit remains incomplete.
