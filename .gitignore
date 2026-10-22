@@ -9,3 +9,5 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+build/release-codecs.json
+licenses/

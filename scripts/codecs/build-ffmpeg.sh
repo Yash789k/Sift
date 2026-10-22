@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build only from archives checked by fetch.py. No nonfree or downloaded binaries.
 set -euo pipefail
+trap 'if [[ -f ffbuild/config.log ]]; then tail -100 ffbuild/config.log; fi' ERR
 root=$(cd "$(dirname "$0")/../.." && pwd)
 work=${1:?Pass an absolute build directory outside a synced folder}
 mkdir -p "$work"
@@ -34,22 +35,34 @@ unpack() {
 }
 unpack ogg libogg-1.3.5.tar.gz
 ./configure --prefix="$prefix" --disable-shared --enable-static
-make -j"$jobs" && make install
+make -j"$jobs"
+make install
 unpack vorbis libvorbis-1.3.7.tar.gz
+# libvorbis 1.3.7 predates the current Apple linker; remove its obsolete flag.
+python3 - <<'PYCODE'
+from pathlib import Path
+p = Path('configure')
+p.write_text(p.read_text().replace('-force_cpusubtype_ALL', ''))
+PYCODE
 ./configure --prefix="$prefix" --disable-shared --enable-static --disable-oggtest
-make -j"$jobs" && make install
+make -j"$jobs"
+make install
 unpack lame lame-3.100.tar.gz
 ./configure --prefix="$prefix" --disable-shared --enable-static --disable-frontend --disable-nasm
-make -j"$jobs" && make install
+make -j"$jobs"
+make install
 unpack opus opus-1.6.1.tar.gz
 ./configure --prefix="$prefix" --disable-shared --enable-static --disable-extra-programs --disable-doc
-make -j"$jobs" && make install
+make -j"$jobs"
+make install
 unpack x264 x264-31e19f92.tar.gz
 ./configure --prefix="$prefix" --enable-static --enable-pic --disable-cli --disable-opencl
-make -j"$jobs" && make install
+make -j"$jobs"
+make install
 unpack vpx libvpx-1.17.0.tar.gz
 ./configure --prefix="$prefix" --enable-pic --disable-shared --disable-examples --disable-tools --disable-docs --disable-unit-tests ${vpx_target[@]+"${vpx_target[@]}"}
-make -j"$jobs" && make install
+make -j"$jobs"
+make install
 unpack ffmpeg ffmpeg-8.1.3.tar.xz
 ./configure --prefix="$prefix" --disable-autodetect --disable-shared --enable-static \
   --disable-doc --disable-debug --disable-network --disable-ffplay --disable-ffprobe \

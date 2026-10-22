@@ -6,29 +6,37 @@ Sift 0.3 is an offline file converter that stays in the Windows notification are
 
 *Sift 0.3.1, captured over a test background. Hold Shift while dragging for formats; use Tools for compression, cropping and other image actions.*
 
-## Install
+## Download and install
 
-**Public installers are not available yet.** This repository contains the source and build configuration. The Windows installer has been tested locally; macOS builds and hardware verification are still pending. Developers can follow [Build from source](#build-from-source). The instructions below apply when you have a locally built installer or app bundle.
+Get Sift from **[GitHub Releases](https://github.com/Yash789k/Sift/releases)**. Open the newest prerelease and expand **Assets**.
 
-### Windows 10/11, x64
+| Your computer | Download |
+|---|---|
+| Mac with an Apple chip (M1, M2, M3, M4 or newer), macOS 13+ | `Sift-<version>-macos-arm64.dmg` |
+| Windows 11 PC with an Intel or AMD 64-bit processor | `Sift-<version>-windows-x64-setup.exe` |
 
-1. Run your locally built `Sift-0.3.1-windows-x64-setup.exe`.
-2. Sift installs for your Windows account and starts quietly. Look for its icon in the notification area; Windows may put it under **Show hidden icons**.
-3. Open the icon's menu and choose **Convert files…**, **Current jobs…** or **Settings…**.
+You need **only the installer for your computer**. Node.js, Electron and the conversion tools are already included. You do not need Git, Terminal commands, an account or an API key. The **Source code** and **Corresponding source** downloads are for developers, not installation. Native Windows ARM and Intel Mac installers are not part of this first prerelease.
 
-The installer includes Electron, the conversion engine and its native dependencies. It needs no administrator account or console window. The standard location is `%LOCALAPPDATA%\Programs\sift-desktop\Sift.exe`; Windows can redirect its per-user Programs folder. A Start-menu shortcut is created. Opening Sift again keeps one background instance.
+The first release is an **unsigned prerelease**: a test version whose publisher has not been verified by Apple or Microsoft. Expect a first-open security warning. Read the release notes before installing, and only approve a file you downloaded from this repository. [Step-by-step instructions and warning help →](docs/INSTALLATION.md)
 
-**Launch at login is off until you enable it** in Settings or the tray menu. Settings reads the operating system's actual registration/approval state. If Windows Startup apps has disabled Sift, it reports that state.
+### Mac with Apple Silicon
 
-The local Windows installer is unsigned unless signing credentials were explicitly supplied at build time. This repository does not provide a public download or claim a trusted publisher signature.
+1. Download the `.dmg` file above and double-click it.
+2. Drag **Sift** onto **Applications** in the window that appears.
+3. Eject the Sift disk, then open **Applications → Sift**.
+4. Look for Sift in the **menu bar at the top of your screen**. It does not keep a Dock icon or a large window open.
+5. Click its menu-bar icon → **Convert files…**, choose a file, then choose an output format.
 
-### macOS 13 or later
+For the optional drag shortcuts, open Sift **Settings → Open shortcut access…**, enable Sift in **System Settings → Privacy & Security → Input Monitoring**, then quit and reopen Sift. You can use **Convert files…** without this permission.
 
-Choose the `arm64` DMG for an Apple Silicon Mac or `x64` for an Intel Mac. Open `Sift-0.3.1-macos-<arch>.dmg`, drag **Sift.app** into **Applications**, eject the disk image, then open Sift. It runs in the menu bar without a Dock icon.
+### Windows 11
 
-For drag shortcuts, use **Settings → Open shortcut access…**, enable Sift under **System Settings → Privacy & Security → Input Monitoring**, then quit and reopen Sift. Manual **Convert files…** remains available. Launch at login is optional; macOS may require approval under **General → Login Items**.
+1. Download the `.exe` file above and double-click it.
+2. Let the installer finish. It installs for your Windows account and opens Sift.
+3. Find Sift in the **notification area beside the clock**. Click the hidden-icons arrow if needed.
+4. Open Sift's icon menu → **Convert files…**, choose a file, then choose an output format.
 
-**The macOS build and hardware workflow still require verification on a Mac.** The local default uses an ad-hoc signature, which does not establish Developer ID/Gatekeeper trust or notarization. A signed, notarized release is a separate build step described in [DISTRIBUTION.md](DISTRIBUTION.md). No Mac runtime pass is claimed.
+A **Sift** shortcut is added to Start. You do not need to open a console or run the installer as administrator. **Launch at login** starts off; enable it in Sift's settings if you want it.
 
 ## Use Sift
 
@@ -89,38 +97,12 @@ Preferences, recent output records and bounded diagnostic logs stay in Electron'
 
 Native detection reads modifier/button state and pointer location. Windows reads source-window class and Explorer selection context; macOS checks the file drag pasteboard. Files are not uploaded. Bounded local gesture diagnostics record transition events, not typed text, filenames, window titles or pointer coordinates. Disable **Drag shortcuts** or quit Sift to stop detection.
 
-## Build from source
+## For developers
 
-Use Node.js **22.12 or newer** (Node 24 recommended) on the target OS and CPU architecture:
-
-```sh
-npm ci
-npm run setup
-npm start
-```
-
-Development startup also stays in the tray/menu bar; login registration is available only in a packaged app. Dependencies and Electron download during setup. Conversions run locally afterward. Windows needs the standard .NET Framework C# compiler for its small Explorer helper; the packaged installer already includes that helper. Mac builds need Xcode Command Line Tools.
-
-```sh
-npm test
-npm run test:desktop
-npm run check:package
-npm run package:dir
-npm run package
-```
-
-`package:dir` creates an unpacked app for testing. `package` creates a Windows per-user NSIS installer or a macOS DMG with the app bundle. Neither publishes files. Output is under `dist/`: `win-unpacked/Sift.exe`, `Sift-<version>-windows-x64-setup.exe`, or a `mac[-arm64]/Sift.app` and `Sift-<version>-macos-<arch>.dmg`.
-
-Build Windows x64 on Windows x64, Apple Silicon on an ARM64 Mac, and Intel on an Intel Mac. The wrapper rejects cross-architecture builds to keep Sharp, canvas, Koffi and FFmpeg matched to the host. Windows ARM64 is not a native build target because the current FFmpeg package lacks that binary. Do not copy Windows `node_modules` to a Mac. The source launchers remain developer conveniences; end users use the installer/app.
-
-CI is configured for Windows x64, Apple Silicon and Intel Mac runners. It installs, tests and builds without artifact uploads. CI configuration, an installer file and a code signature are not substitutes for target-machine runtime checks. See [DISTRIBUTION.md](DISTRIBUTION.md) for signing, notarization and the public-binary release boundary.
-
-`test:desktop` runs the real main process, preload, renderer and conversion worker in Electron. Fixtures replace native file-picker and Quit-confirmation choices and the final OS reveal boundary; it does not simulate an Explorer/Finder drag. It needs a desktop session. The 0.3.1 Windows revision passed **112 automated tests** and **13 Electron integration scenarios** against both source and the installed app, covering silent startup, closing/reopening windows, conversion/tool outputs, automatic success dismissal, hover audio, collisions, damaged input, duplicate jobs and safe Quit. Actual startup registration/readback/removal passed in 0.3.0, with startup restored to off. macOS hardware verification and a fresh physical drag check of the lazy startup path remain outstanding; configured CI is not evidence of a remote pass.
+Users should install a download from Releases. To change Sift, run tests, or build your own installer, follow [CONTRIBUTING.md](CONTRIBUTING.md). Maintainers can find the build, signing and release process in [DISTRIBUTION.md](DISTRIBUTION.md).
 
 ## License and publishing
 
 Original Sift source and project-created assets are **GPL-3.0-or-later**: [LICENSE](LICENSE). Dependencies retain their own licenses: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). See [CONTRIBUTING.md](CONTRIBUTING.md) for development and testing.
 
-This repository publishes source and project-created assets. It excludes installed dependencies, compiled binaries, private reference screenshots, profiles/history and machine-specific evidence. Each developer installs dependencies for a local build.
-
-Public compiled releases require the exact dependency notices and corresponding-source materials described in [DISTRIBUTION.md](DISTRIBUTION.md), including GPL FFmpeg and LGPL HEIC components. CI has no binary artifact publishing step while that audit remains incomplete.
+Installer releases include the bundled runtime and converters. Matching source, build recipes, checksums and license notices accompany each public binary release as described in [DISTRIBUTION.md](DISTRIBUTION.md). No automatic updater is included.

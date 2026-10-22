@@ -15,15 +15,17 @@ Sift's original source and project-created assets are licensed GPL-3.0-or-later;
 | heic-decode | 2.1.0 | ISC | [catdad-experiments/heic-decode](https://github.com/catdad-experiments/heic-decode) |
 | libheif-js (transitive) | 1.23.5 | LGPL-3.0 | [catdad-experiments/libheif-js](https://github.com/catdad-experiments/libheif-js) |
 | elheif | 0.1.0 | MIT wrapper; embedded libraries retain their licenses | [hpp2334/elheif](https://github.com/hpp2334/elheif) |
-| libheif in elheif WASM | Exact embedded revision unverified | LGPLv3 library; see upstream notice | [libheif COPYING](https://github.com/strukturag/libheif/blob/master/COPYING) |
-| libde265 in elheif WASM | Exact embedded revision unverified | LGPLv3 library; see upstream notice | [libde265 COPYING](https://github.com/strukturag/libde265/blob/master/COPYING) |
-| kvazaar in elheif WASM | Exact embedded revision unverified | BSD-3-Clause | [kvazaar LICENSE](https://github.com/ultravideo/kvazaar/blob/master/LICENSE) |
+| libheif in release encoder WASM | 1.23.6 | LGPLv3 library; see upstream notice | [libheif COPYING](https://github.com/strukturag/libheif/blob/master/COPYING) |
+| libde265 in libheif-js decoder | 1.0.15 | LGPLv3 library; see upstream notice | [libde265 COPYING](https://github.com/strukturag/libde265/blob/master/COPYING) |
+| kvazaar in release encoder WASM | 2.3.2 | BSD-3-Clause | [kvazaar LICENSE](https://github.com/ultravideo/kvazaar/blob/master/LICENSE) |
 | Koffi | 2.14.1 | MIT | [Koromix/koffi](https://github.com/Koromix/koffi) |
 | ffmpeg-static | 5.3.0 | GPL-3.0-or-later | [eugeneware/ffmpeg-static](https://github.com/eugeneware/ffmpeg-static) |
 | electron-builder (build tool) | 26.15.3 | MIT; downloaded packaging/signing tools have their own notices | [electron-userland/electron-builder](https://github.com/electron-userland/electron-builder) |
 
-The installed Windows FFmpeg binary is 6.1.1-essentials_build-www.gyan.dev, GPLv3-or-later. Its ffmpeg.exe.LICENSE and ffmpeg.exe.README are beside the executable. The README points to [FFmpeg e38092ef93](https://github.com/FFmpeg/FFmpeg/commit/e38092ef93) and lists the static build configuration. Exact FFmpeg/libheif and other native dependency source obligations remain a public-binary release gate; see DISTRIBUTION.md. Licensing the Sift app under GPL does not replace those obligations.
+Release builds replace the npm FFmpeg executable with **FFmpeg 8.1.3**, configured under GPL-3.0-or-later and without nonfree components. Its external codecs are x264 (GPL), libvpx (BSD), LAME (LGPL), Opus (BSD), libvorbis (BSD) and libogg (BSD). Exact source URLs, checksums, build scripts and full license texts accompany the release. The old Mac npm payload uses `--enable-nonfree` and must not be redistributed.
 
-elheif supplies Sift's local HEIC encoder. Its [build configuration](https://github.com/hpp2334/elheif/blob/main/core/CMakeLists.txt) statically links libheif, libde265 and kvazaar fetched without pinned GIT_TAG revisions. Therefore the current upstream license files identify the relevant license families but do not establish the exact embedded source revisions. Preserve the MIT wrapper notice and obtain exact matching source/build materials before public binary distribution. icodec and ImageMagick are not application dependencies or bundled components.
+Release builds also replace elheif's unpinned npm WASM with a build from pinned elheif source, libheif 1.23.6 and kvazaar 2.3.2. elheif's MIT wrapper does not change libheif's LGPL obligations. The separate libheif-js decoder uses libheif 1.23.5 and libde265 1.0.15. See [DISTRIBUTION.md](DISTRIBUTION.md) for exact revisions and rebuild instructions.
+
+The installed `licenses` folder contains upstream license/copyright text and production package metadata, including notices for Sharp/libvips and canvas/Skia dependencies. Electron's own license and Chromium credits remain in the app. The release's corresponding-source archive includes source and patches for the covered native components; it is available beside the installer in [Releases](https://github.com/Yash789k/Sift/releases).
 
 The Sift icon and Aurora sample illustration were created for this project. [Tangerine for Mac](https://www.tangerineformac.com/) is the user's visual and interaction reference; Sift is an independent implementation with original code and assets, not an official Tangerine port or an affiliated product. Reference screenshots are review material and are excluded from the publishable source archive.

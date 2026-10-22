@@ -7,7 +7,7 @@ permissions:
   contents: read
 concurrency:
   group: installers-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   ffmpeg:
     strategy:
@@ -21,6 +21,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: codec-cache
+        with:
+          path: ${{ runner.temp }}/ffmpeg
+          key: ffmpeg-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('scripts/codecs/sources.json', 'scripts/codecs/build-ffmpeg.sh') }}
       - if: runner.os == 'macOS'
         run: brew install nasm pkg-config
       - if: runner.os == 'Windows'
@@ -31,9 +36,9 @@ jobs:
           install: >-
             make diffutils python curl tar autoconf automake libtool
             mingw-w64-x86_64-gcc mingw-w64-x86_64-pkgconf mingw-w64-x86_64-nasm
-      - if: runner.os == 'macOS'
+      - if: runner.os == 'macOS' && steps.codec-cache.outputs.cache-hit != 'true'
         run: bash scripts/codecs/build-ffmpeg.sh "$RUNNER_TEMP/ffmpeg"
-      - if: runner.os == 'Windows'
+      - if: runner.os == 'Windows' && steps.codec-cache.outputs.cache-hit != 'true'
         shell: msys2 {0}
         run: bash scripts/codecs/build-ffmpeg.sh "$(cygpath -u "$RUNNER_TEMP")/ffmpeg"
       - uses: actions/upload-artifact@v4
@@ -48,6 +53,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        id: codec-cache
+        with:
+          path: ${{ runner.temp }}/heic
+          key: heic-${{ hashFiles('scripts/codecs/sources.json', 'scripts/codecs/build-heic.sh') }}
       - run: sudo apt-get update && sudo apt-get install -y autoconf automake libtool pkg-config
       - name: Install pinned Emscripten SDK
         run: |
@@ -55,6 +65,7 @@ jobs:
           "$RUNNER_TEMP/emsdk/emsdk" install 3.1.61
           "$RUNNER_TEMP/emsdk/emsdk" activate 3.1.61
       - name: Build HEIC encoder from source
+        if: steps.codec-cache.outputs.cache-hit != 'true'
         run: |
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
           bash scripts/codecs/build-heic.sh "$RUNNER_TEMP/heic"
@@ -64,5 +75,114 @@ jobs:
           path: |
             ${{ runner.temp }}/heic/result
             ${{ runner.temp }}/heic/sources
+          if-no-files-found: error
+          retention-days: 14
+  sources:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/sources
+          key: sources-${{ hashFiles('scripts/codecs/sources.json', 'scripts/native-sources.json') }}
+      - name: Collect and verify matching sources
+        run: |
+          python3 scripts/codecs/fetch.py "$RUNNER_TEMP/sources"
+          python3 scripts/codecs/fetch.py "$RUNNER_TEMP/sources" all scripts/native-sources.json
+          python3 scripts/collect-source-notices.py "$RUNNER_TEMP/sources" "$RUNNER_TEMP/notices"
+          python3 scripts/bundle-release-source.py "$RUNNER_TEMP/sources" "$RUNNER_TEMP/source-output"
+          tar czf "$RUNNER_TEMP/source-output/native-notices.tar.gz" -C "$RUNNER_TEMP/notices" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: corresponding-source
+          path: ${{ runner.temp }}/source-output/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+  installers:
+    needs: [ffmpeg, heic, sources]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: macos-arm64
+          - os: windows-latest
+            target: windows-x64
+    runs-on: ${{ matrix.os }}
+    env:
+      SIFT_RELEASE: '1'
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: ffmpeg-${{ matrix.target }}
+          path: release-input/ffmpeg
+      - uses: actions/download-artifact@v4
+        with:
+          name: heic
+          path: release-input/heic
+      - uses: actions/download-artifact@v4
+        with:
+          name: corresponding-source
+          path: release-input/source
+      - run: npm ci
+      - run: npm run setup
+      - run: node scripts/install-release-codecs.cjs release-input/ffmpeg release-input/heic
+      - name: Preserve licenses in the app
+        shell: bash
+        run: |
+          mkdir -p licenses/native
+          tar xf release-input/source/native-notices.tar.gz -C licenses/native
+          node scripts/collect-npm-notices.cjs
+      - run: npm run check:package
+      - run: npm test
+      - run: npm run test:desktop
+      - run: npm run package
+      - name: Verify Mac disk image and packaged runtime
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil verify dist/Sift-*-macos-arm64.dmg
+          codesign --verify --deep --strict dist/mac-arm64/Sift.app
+          ELECTRON_RUN_AS_NODE=1 dist/mac-arm64/Sift.app/Contents/MacOS/Sift scripts/test-packaged.cjs
+      - name: Verify Windows packaged runtime
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:ELECTRON_RUN_AS_NODE = '1'
+          & dist/win-unpacked/Sift.exe scripts/test-packaged.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Packaged runtime smoke test failed' }
+      - name: Verify Windows installation and removal
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue
+          $setup = (Get-Item dist/*-setup.exe).FullName
+          $process = Start-Process $setup -ArgumentList '/S' -PassThru
+          if (-not $process.WaitForExit(120000) -or $process.ExitCode -ne 0) { throw 'Installer failed' }
+          $installed = Join-Path $env:LOCALAPPDATA 'Programs/sift-desktop'
+          if (-not (Test-Path "$installed/Sift.exe")) { throw 'Installed executable is missing' }
+          $env:ELECTRON_RUN_AS_NODE = '1'
+          & "$installed/Sift.exe" scripts/test-packaged.cjs
+          if ($LASTEXITCODE -ne 0) { throw 'Installed app smoke test failed' }
+          Remove-Item Env:ELECTRON_RUN_AS_NODE
+          $process = Start-Process "$installed/Uninstall Sift.exe" -ArgumentList '/S' -PassThru
+          if (-not $process.WaitForExit(120000)) { throw 'Uninstaller timed out' }
+          Start-Sleep -Seconds 3
+          if (Test-Path "$installed/Sift.exe") { throw 'Uninstaller left the application executable' }
+      - name: Attach build provenance
+        shell: bash
+        run: cp build/release-codecs.json "dist/codecs-${{ matrix.target }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ matrix.target }}
+          path: |
+            dist/*.dmg
+            dist/*-setup.exe
+            dist/codecs-*.json
           if-no-files-found: error
           retention-days: 14

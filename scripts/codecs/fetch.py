@@ -6,16 +6,17 @@ import pathlib
 import subprocess
 import sys
 
-manifest = json.loads(pathlib.Path(__file__).with_name('sources.json').read_text())
+manifest_path = pathlib.Path(sys.argv[3]) if len(sys.argv) > 3 else pathlib.Path(__file__).with_name('sources.json')
+manifest = json.loads(manifest_path.read_text())
 destination = pathlib.Path(sys.argv[1]).resolve()
 destination.mkdir(parents=True, exist_ok=True)
-group = sys.argv[2] if len(sys.argv) > 2 else None
+group = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] != 'all' else None
 
 def fetch(item):
     target = destination / item['file']
     if not target.exists():
         temporary = target.with_suffix(target.suffix + '.part')
-        subprocess.run(['curl', '--fail', '--location', '--retry', '3', '--silent', '--show-error', item['url'], '-o', str(temporary)], check=True)
+        subprocess.run(['curl', '--fail', '--location', '--retry', '3', '--silent', '--show-error', '--max-time', '180', item['url'], '-o', str(temporary)], check=True)
         temporary.replace(target)
     digest = hashlib.sha256(target.read_bytes()).hexdigest()
     if digest != item['sha256']:
