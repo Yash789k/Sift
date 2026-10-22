@@ -45,6 +45,8 @@ Selecting files and pressing Shift without dragging does not open the wheel. You
 
 If dragging still does nothing, check **Settings → Drag shortcuts**. A permission message means macOS has not granted access to this installed copy. Use **Open shortcut access…**, approve Sift and quit/reopen it. An unsigned app update may require granting access to the new copy again. If Sift already looks enabled after an update, switch only Sift off and back on in Input Monitoring, approve the macOS prompt, then quit/reopen it.
 
+If that still leaves the permission message in Sift, select Sift's old entry in Input Monitoring and remove it with **−**. Click **+**, choose **Applications → Sift**, enable it, then choose **Quit & Reopen**. This replaces the permission entry for the old unsigned copy. Leave the other applications in the list unchanged.
+
 You can use **Convert files…** without granting Input Monitoring. Launch at login is also optional. Enable it in Sift's settings; macOS may ask you to approve it in **General → Login Items**.
 
 ## 3. Install on Windows 11
