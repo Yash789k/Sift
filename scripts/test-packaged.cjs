@@ -13,7 +13,7 @@ const sharp = requireApp('sharp');
 const ffmpeg = requireApp('ffmpeg-static');
 const run = promisify(execFile);
 const folder = require('node:fs').mkdtempSync(path.join(require('node:os').tmpdir(), 'sift-packaged-smoke-'));
-require('./check-release-codecs.cjs').checkReleaseCodecs(appRoot);
+require('./check-release-codecs.cjs').checkReleaseCodecs(appRoot, { afterSigning: true });
 const checks = [];
 async function main() {
   await fs.mkdir(folder, { recursive: true });
