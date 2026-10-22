@@ -1,6 +1,6 @@
 {
   "name": "sift-desktop",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "An offline background file converter for Windows and macOS. Drag, Shift, drop.",
   "author": "Sift contributors",

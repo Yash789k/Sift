@@ -10,6 +10,7 @@ const { createStartupSettings } = require('./startup-settings.cjs');
 const { keepWindowInBackground, createQuitCoordinator } = require('./background-lifecycle.cjs');
 const { createJobManager } = require('./job-manager.cjs');
 const { createLocalLog } = require('./local-log.cjs');
+const { createCompletionLifecycle } = require('./completion-lifecycle.cjs');
 app.setName('Sift');
 if (process.platform === 'win32') app.setAppUserModelId('org.siftconverter.desktop');
 if (process.argv.includes('--demo')) {
@@ -21,6 +22,8 @@ let win, wheelReady, utilityWin, utilityReady, utilityView = 'jobs', tray, stopG
 let quitting = false, quickMode = false, nativeDialogOpen = false, ingestionInProgress = false;
 let retainedQuick = false, wheelKind = 'formats', editorOpen = false, wheelEpoch = 0;
 let selectionProbe, dragContext, contextEpoch = 0, startupCache;
+let successToast;
+const completionJobs = new WeakMap();
 let state = { outputDir: null, gestureEnabled: true, history: [], radialVersion: 3 };
 const stateFile = path.join(app.getPath('userData'), 'settings.json');
 const gestureLogFile = path.join(app.getPath('userData'), 'gesture-diagnostics.json');
@@ -46,6 +49,23 @@ function recordGesture(event) {
   }, 100); diagnosticTimer.unref?.();
 }
 function send(type, value) { if (win && !win.isDestroyed()) win.webContents.send(type, value); }
+const completion = createCompletionLifecycle({
+  present: presentSuccessToast, hideSource: hideWindow,
+  canPresent: () => !nativeDialogOpen && !quit.isStopping(),
+  dismiss: token => {
+    if (successToast?.token !== token) return;
+    const previous = successToast.window; successToast = undefined;
+    if (!previous.isDestroyed()) { previous.hide(); previous.destroy(); }
+  },
+  fade: token => { if (successToast?.token === token && !successToast.window.isDestroyed()) successToast.window.webContents.send('completion-fade', token); },
+  reveal: async filePath => {
+    if (showResult(filePath)) return true;
+    nativeDialogOpen = true;
+    try { await dialog.showMessageBox({ type: 'info', title: 'File unavailable', message: 'The saved file is no longer available.', detail: 'It may have been moved or deleted after Sift saved it.', buttons: ['OK'], noLink: true }); }
+    finally { nativeDialogOpen = false; }
+    return false;
+  }, onError: report,
+});
 const engine = createEngineService({ logger: ({ event, ...details }) => log(event, details) });
 let capabilities;
 async function getCapabilities() { if (!capabilities) capabilities = await engine.request('getCapabilities'); return capabilities; }
@@ -81,6 +101,7 @@ const quit = createQuitCoordinator({
     finally { nativeDialogOpen = false; }
   },
   shutdown: async () => {
+    completion.cancel();
     stopGesture?.(); selectionProbe?.stop(); clearTimeout(releaseTimer); stopCapture(); globalShortcut.unregisterAll();
     const settling = jobs.current?.promise;
     jobs.cancel(); await engine.shutdown();
@@ -118,7 +139,7 @@ function ensureWheel() {
   const created = new BrowserWindow({
     width: 400, height: 400, minWidth: 1, minHeight: 1, title: 'Sift', backgroundColor: '#00000000', icon: path.join(__dirname, 'icon.png'),
     frame: false, transparent: true, show: false, hasShadow: false, resizable: false, skipTaskbar: true, alwaysOnTop: true, fullscreenable: false,
-    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false },
+    webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required' },
   });
   win = created; lockNavigation(created);
   keepWindowInBackground(created, { isQuitting: () => quitting, onHide: hideWindow });
@@ -178,6 +199,7 @@ function boundsAt(point, width, height) {
 function showWheel({ point, kind = 'formats', manual = false, fresh = true, files } = {}) {
   if (quit.isStopping() || engine.snapshot().closing) return false;
   if (jobs.current || nativeDialogOpen || (ingestionInProgress && fresh)) { if (manual && jobs.current) runQuietly(showUtility('jobs')); return false; }
+  completion.cancel();
   clearTimeout(releaseTimer); quickMode = !manual; retainedQuick = false; editorOpen = false; wheelKind = kind;
   const epoch = ++wheelEpoch;
   runQuietly(ensureWheel().then(window => {
@@ -192,13 +214,40 @@ function showWheel({ point, kind = 'formats', manual = false, fresh = true, file
 }
 function showEditor({ tool, width = 390, height = 600 } = {}) {
   if (!win || win.isDestroyed() || quit.isStopping()) return;
+  completion.cancel();
   clearTimeout(releaseTimer); quickMode = false; retainedQuick = true; editorOpen = true;
   const old = win.getBounds();
   const bounds = boundsAt({ x: old.x + old.width / 2, y: old.y + old.height / 2 },
     Math.max(360, Math.min(560, Number(width) || 390)), Math.max(420, Math.min(780, Number(height) || 600)));
   win.setBounds(bounds); win.show(); win.setBounds(bounds); recordGesture({ event: 'editor-shown', tool });
 }
-function hideWindow() { clearTimeout(releaseTimer); wheelEpoch++; quickMode = false; editorOpen = false; retainedQuick = false; if (win && !win.isDestroyed()) win.hide(); }
+function hideWindow() { clearTimeout(releaseTimer); wheelEpoch++; quickMode = false; editorOpen = false; retainedQuick = false; if (win && !win.isDestroyed()) { send('visibility', { visible: false }); win.hide(); } }
+async function presentSuccessToast(summary, token) {
+  if (!completion.isCurrent(token) || quit.isStopping()) return;
+  const previous = win && !win.isDestroyed() ? win.getBounds() : null;
+  const point = previous ? { x: previous.x + previous.width / 2, y: previous.y + previous.height + 48 } : screen.getCursorScreenPoint();
+  const bounds = boundsAt(point, 360, 76);
+  const created = new BrowserWindow({ ...bounds, minWidth: 1, minHeight: 1, title: 'Sift · Saved', backgroundColor: '#00000000',
+    frame: false, transparent: true, show: false, hasShadow: false, resizable: false, skipTaskbar: true, alwaysOnTop: true, fullscreenable: false,
+    webPreferences: { preload: path.join(__dirname, 'success-toast-preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, backgroundThrottling: false } });
+  successToast = { token, window: created, bounds }; lockNavigation(created);
+  created.on('closed', () => { if (successToast?.window === created) successToast = undefined; });
+  try {
+    await created.loadFile(path.join(__dirname, 'success-toast.html'));
+    if (!completion.isCurrent(token) || created.isDestroyed()) { if (!created.isDestroyed()) created.destroy(); return; }
+    created.webContents.send('completion-present', { token, count: summary.count, name: summary.name, warning: summary.warning });
+  } catch (error) { if (!created.isDestroyed()) created.destroy(); if (completion.isCurrent(token)) throw error; }
+}
+function completionSender(event, token) {
+  return successToast?.token === token && completion.isCurrent(token) && !successToast.window.isDestroyed() &&
+    event.sender === successToast.window.webContents && (!event.senderFrame || event.senderFrame === successToast.window.webContents.mainFrame);
+}
+ipcMain.handle('completion-ready', (event, token) => {
+  if (!completionSender(event, token)) return false;
+  successToast.window.setAlwaysOnTop(true, 'floating'); successToast.window.showInactive(); successToast.window.setBounds(successToast.bounds);
+  return completion.visible(token);
+});
+ipcMain.handle('completion-show', (event, token) => completionSender(event, token) ? completion.show(token) : false);
 function setupGesture() {
   stopGesture?.(); stopGesture = undefined;
   if (!state.gestureEnabled || quit.isStopping() || engine.snapshot().closing) { recordGesture({ event: 'disabled' }); return; }
@@ -294,7 +343,19 @@ function validatePaths(paths, min = 1) {
 function runJob(request, operation, label) {
   validatePaths(request?.paths); if (quit.isStopping()) throw new Error('Sift is finishing shutdown.');
   clearTimeout(releaseTimer); retainedQuick = true;
-  return jobs.run(operation, { ...request, outputDir: state.outputDir }, label);
+  const pending = jobs.run(operation, { ...request, outputDir: state.outputDir }, label);
+  // Conflicting submissions are rejected by the job manager. They must not
+  // invalidate the accepted job's completion or restart a duplicate's timer.
+  if (pending !== jobs.current?.promise) return pending;
+  if (!completionJobs.has(pending)) {
+    const token = completion.begin(), job = jobs.current;
+    const observed = pending.then(results => {
+      completion.complete(token, results, { cancelled: job?.status !== 'completed' || quit.isStopping() });
+      return results;
+    });
+    completionJobs.set(pending, observed);
+  }
+  return completionJobs.get(pending);
 }
 function handle(channel, callback, scope = 'wheel') {
   ipcMain.handle(channel, (event, ...args) => {
@@ -305,7 +366,7 @@ function handle(channel, callback, scope = 'wheel') {
   });
 }
 handle('state', async () => ({ ...state, platform: process.platform, capabilities: await getCapabilities(), gestureAvailable: stopGesture?.available ?? false }));
-handle('ingestion-begin', () => { if (jobs.current) throw new Error('A file operation is already running.'); ingestionInProgress = true; clearTimeout(releaseTimer); });
+handle('ingestion-begin', () => { if (jobs.current) throw new Error('A file operation is already running.'); completion.cancel(); ingestionInProgress = true; clearTimeout(releaseTimer); });
 handle('ingestion-end', () => { ingestionInProgress = false; retainedQuick = false; });
 handle('choose-files', () => chooseFiles(win));
 handle('sample', () => engine.request('inspectFiles', [path.join(__dirname, '..', 'samples', 'Aurora.png')]));

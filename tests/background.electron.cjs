@@ -1,7 +1,8 @@
 'use strict';
 // Run with Electron, not node --test. Exercises the real main/preload/renderer
-// and worker. Only native file pickers and Quit choices are controlled fixtures.
-const { app, BrowserWindow, Tray, dialog } = require('electron');
+// and worker. Native file pickers, Quit choices and the final OS reveal boundary
+// are controlled fixtures; conversion, window lifecycle and reveal IPC are real.
+const { app, BrowserWindow, Tray, dialog, shell } = require('electron');
 const fs = require('node:fs'), path = require('node:path'), os = require('node:os');
 const assert = require('node:assert/strict'), crypto = require('node:crypto');
 const { promisify } = require('node:util'), { execFile } = require('node:child_process');
@@ -13,6 +14,8 @@ fs.writeFileSync(path.join(profile, 'settings.json'), JSON.stringify({outputDir:
 app.setPath('userData', profile);
 let menu, pickerPaths = [], dialogChoice = 0, dialogCalls = 0, finalQuitExpected = false;
 let startupNeedsReset = false;
+const revealed = [];
+shell.showItemInFolder = file => revealed.push(file);
 const evidence = {platform:process.platform, packaged:app.isPackaged, nativeDragSimulated:false, checks:[], errors:[], outputs:[]};
 const setMenu = Tray.prototype.setContextMenu;
 Tray.prototype.setContextMenu = function(value) { menu = value; return setMenu.call(this, value); };
@@ -39,6 +42,7 @@ const js = async (window, code) => {
 const windows = () => BrowserWindow.getAllWindows().filter(window => !window.isDestroyed());
 const wheel = () => windows().find(window => /[\\/]index\.html/.test(window.webContents.getURL()));
 const utility = () => windows().find(window => /[\\/]utility\.html/.test(window.webContents.getURL()));
+const toast = () => windows().find(window => /[\\/]success-toast\.html/.test(window.webContents.getURL()));
 const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 async function shot(window, name) {
   const file = path.join(folder, `${name}.png`);
@@ -99,15 +103,81 @@ app.whenReady().then(async () => {
     await until(() => wheel() && !wheel().webContents.isLoadingMainFrame(), 'wheel');
     const radial = wheel();
     await until(() => js(radial, 'files.length === 1 && Boolean(state.capabilities)'), 'chosen file reaches wheel');
-    await js(radial, 'document.querySelector(".wedge[data-id=webp]").dispatchEvent(new MouseEvent("click",{bubbles:true}))');
+    const audio = await js(radial, `(async()=>{
+      const NativeContext=window.AudioContext;
+      window.qaAudioContexts=[]; window.qaAudioStarts=0;
+      window.AudioContext=class extends NativeContext {
+        constructor(options){super(options);window.qaAudioContexts.push(this);}
+      };
+      const nativeStart=AudioBufferSourceNode.prototype.start;
+      AudioBufferSourceNode.prototype.start=function(...args){window.qaAudioStarts++;return nativeStart.apply(this,args);};
+      const probe=SiftWheelSound.create();
+      const played=await probe.hover('first-hover-without-click');
+      const result={played,state:window.qaAudioContexts.at(-1)?.state};
+      probe.dispose(); return result;
+    })()`);
+    assert.deepEqual(audio, {played:true,state:'running'}, 'Soft click must initialize without a prior user click');
+    await pause(100);
+    const beforeHover = await js(radial, 'window.qaAudioStarts');
+    await js(radial, 'document.querySelector(".wedge[data-id=webp]").dispatchEvent(new MouseEvent("mouseenter"))');
+    await until(() => js(radial, `window.qaAudioStarts > ${beforeHover}`), 'wheel hover audio hook');
+    const afterHover = await js(radial, 'window.qaAudioStarts');
+    await pause(100);
+    await js(radial, 'document.querySelector(".wedge[data-id=webp]").dispatchEvent(new MouseEvent("mouseenter"))');
+    assert.equal(await js(radial, 'window.qaAudioStarts'), afterHover, 'Repeated entry on same target must not chatter');
+    await js(radial, '(setBusy(true), document.querySelector(".wedge[data-id=jpeg]").dispatchEvent(new MouseEvent("mouseenter")), undefined)');
+    assert.equal(await js(radial, 'window.qaAudioStarts'), afterHover, 'Busy wheel must not play feedback');
+    await js(radial, '(setBusy(false), document.querySelector(".wedge[data-id=jpeg]").dispatchEvent(new MouseEvent("mouseleave")), undefined)');
+    evidence.checks.push('Local soft click runs without a prior app click, responds to a wheel target and stays silent for repeated/busy events.');
+    evidence.wheelScreenshot = await shot(radial, 'wheel');
+    // Inspect actual composited alpha, including SVG filters/shadows. A visually
+    // transparent fill alone does not prove the rim underneath is hollow.
+    const sharp = require(path.join(root, 'node_modules', 'sharp'));
+    const pixels = await sharp(evidence.wheelScreenshot).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    const pixel = (x,y) => {
+      const offset = (Math.round(y*pixels.info.height/400)*pixels.info.width+Math.round(x*pixels.info.width/400))*4;
+      return [...pixels.data.subarray(offset, offset+4)];
+    };
+    evidence.glassPixels = {center:pixel(200,150), centerSide:pixel(160,160), outside:pixel(2,2), petal:pixel(200,100)};
+    assert.ok(evidence.glassPixels.center[3] <= 8 && evidence.glassPixels.centerSide[3] <= 8, 'Empty center must be transparent through all layers');
+    assert.equal(evidence.glassPixels.outside[3], 0);
+    assert.ok(evidence.glassPixels.petal[3] > 20 && evidence.glassPixels.petal[3] < 230, 'Petal must show the desktop through real alpha');
+    await js(radial, '(document.querySelector(".wedge[data-id=webp]").classList.add("hover"), undefined)');
+    evidence.selectedScreenshot = await shot(radial, 'wheel-selected');
+    await js(radial, '(document.querySelector(".wedge[data-id=webp]").classList.remove("hover"), undefined)');
+    for (const [name,background] of [['dark','#171a22'],['light','#eef0f5'],['colorful','linear-gradient(135deg,#e65c9c,#6e75d5 45%,#54b5ae)']]) {
+      await js(radial, `(document.body.style.background=${JSON.stringify(background)}, undefined)`);
+      evidence[`${name}GlassScreenshot`] = await shot(radial, `wheel-${name}`);
+    }
+    await js(radial, '(document.body.style.background="", undefined)');
+    evidence.checks.push('Real renderer has a hollow center, transparent exterior and translucent petals; glass reviewed on light, dark and colorful test backdrops.');
+    await js(radial, `(()=>{
+      document.querySelector(".wedge[data-id=webp]").dispatchEvent(new MouseEvent("click",{bubbles:true}));
+      window.qaConflictingRequest=sift.convert({paths:[${JSON.stringify(image)}],format:'jpeg'}).then(()=>false,error=>error.message);
+    })()`);
+    assert.match(await js(radial, 'window.qaConflictingRequest'), /already|running|busy/i);
     await until(() => js(panel, 'siftUtility.snapshot().then(s => s.jobs.some(j => j.status === "completed"))'), 'conversion');
     let current = await js(panel, 'siftUtility.snapshot()');
     const result = current.jobs.find(job => job.status === 'completed').results[0];
-    const sharp = require(path.join(root, 'node_modules', 'sharp'));
     assert.equal((await sharp(result.path).metadata()).format, 'webp');
     assert.equal(hash(image), originalHash); evidence.outputs.push(result.path);
-    evidence.wheelScreenshot = await shot(radial, 'wheel');
+    await until(() => toast()?.isVisible(), 'conversion success toast');
+    const firstToast = toast(), toastStarted = Date.now();
+    assert.equal(radial.isVisible(), false, 'Successful conversion must hide wheel without Escape');
+    assert.ok(firstToast.getBounds().height <= 100, 'Toast must not retain the wheel hitbox');
+    evidence.successScreenshot = await shot(firstToast, 'success');
+    await pause(Math.max(0, 1700-(Date.now()-toastStarted)));
+    assert.equal(firstToast.isVisible(), true, 'Show must remain available during the first two seconds');
+    assert.equal(await js(firstToast, 'document.querySelector("#success-show").disabled'), false);
+    await until(() => firstToast.isDestroyed() || !firstToast.isVisible(), 'success toast expires', 1500);
+    evidence.successVisibleMs = Date.now()-toastStarted;
+    assert.ok(evidence.successVisibleMs < 2600);
+    assert.equal(radial.isVisible(), false);
     evidence.checks.push('Tray Convert files feeds the real wheel; WEBP click runs worker and saves a decoded output with source hash unchanged.');
+    evidence.checks.push('Successful conversion hides the wheel immediately; compact Show toast stays usable for two seconds and then disappears automatically.');
+    evidence.checks.push('A rejected conflicting request does not invalidate the active conversion success/dismissal.');
+    await item('Convert files').click();
+    await until(() => radial.isVisible() && js(radial, 'files.length === 1'), 'reopen for tool');
     await js(radial, 'document.querySelector("#wheel-switch").dispatchEvent(new MouseEvent("click",{bubbles:true}))');
     assert.equal(await js(radial, 'wheelKind'), 'tools');
     evidence.toolsScreenshot = await shot(radial, 'tools');
@@ -116,20 +186,51 @@ app.whenReady().then(async () => {
     evidence.cropScreenshot = await shot(radial, 'crop');
     await js(radial, 'document.querySelector("#apply-editor").click()');
     await until(() => js(panel, 'siftUtility.snapshot().then(s => s.jobs.some(j => j.operation === "crop" && j.status === "completed"))'), 'crop job');
-    radial.close(); assert.equal(radial.isVisible(), false);
+    await until(() => toast()?.isVisible(), 'crop success toast');
+    assert.equal(radial.isVisible(), false, 'Successful tool save must hide editor without X');
     current = await js(panel, 'siftUtility.snapshot()');
-    evidence.outputs.push(current.jobs.find(job => job.operation === 'crop').results[0].path);
-    evidence.checks.push('Tools/Crop remains functional through worker-backed preview and save; closing wheel does not quit.');
+    const cropped = current.jobs.find(job => job.operation === 'crop').results[0].path;
+    evidence.outputs.push(cropped);
+    await js(toast(), 'document.querySelector("#success-show").click()');
+    await until(() => revealed.includes(cropped), 'Show reveals successful output');
+    await until(() => !toast()?.isVisible(), 'Show dismisses success toast');
+    evidence.checks.push('Tools/Crop previews and saves in worker, closes editor automatically, and Show passes the actual saved output to the OS reveal boundary.');
+
+    await item('Convert files').click();
+    await until(() => radial.isVisible() && js(radial, 'files.length === 1'), 'reopen for compression');
+    await js(radial, 'openEditor("compress")');
+    await until(() => js(radial, 'mode === "editor" && document.querySelector("#preview-image").naturalWidth > 0'), 'compression preview');
+    await js(radial, 'document.querySelector("#apply-editor").click()');
+    await until(() => toast()?.isVisible(), 'compression success toast');
+    assert.equal(radial.isVisible(), false);
+    const compressionToast = toast();
+    await item('Open format wheel').click();
+    await until(() => radial.isVisible(), 'new wheel cancels old toast');
+    assert.ok(compressionToast.isDestroyed() || !compressionToast.isVisible());
+    await pause(2400);
+    assert.equal(radial.isVisible(), true, 'An old success timer must never hide a new wheel');
+    evidence.checks.push('Compression closes its editor; opening a new wheel cancels the previous toast and survives its old fade deadline.');
+    radial.close(); assert.equal(radial.isVisible(), false);
 
     await js(radial, `sift.convert({paths:[${JSON.stringify(image)}],format:'webp'})`);
     current = await js(panel, 'siftUtility.snapshot()');
     const webps = current.jobs.filter(job => job.operation === 'webp');
     assert.equal(webps.length, 2); assert.notEqual(webps[0].results[0].path, webps[1].results[0].path);
     const broken = path.join(folder, 'Broken.png'); fs.writeFileSync(broken, 'This is deliberately not an image.');
-    await js(radial, `sift.convert({paths:[${JSON.stringify(broken)}],format:'webp'}).catch(e => e.message)`);
+    await item('Open format wheel').click();
+    await until(() => radial.isVisible(), 'wheel for failure recovery');
+    await js(radial, `(setFiles([{path:${JSON.stringify(broken)},name:'Broken.png',kind:'image',ext:'png',size:43}]), convert('webp'))`);
     current = await js(panel, 'siftUtility.snapshot()');
     assert.ok(current.jobs.some(job => job.status === 'failed' || job.status === 'completed-with-errors'));
+    assert.equal(radial.isVisible(), true, 'Failed jobs must leave recovery controls visible');
+    assert.equal(await js(radial, 'document.querySelector("#notice").classList.contains("hidden")'), false);
+    assert.equal(Boolean(toast()?.isVisible()), false);
+    await js(radial, `(setFiles([{path:${JSON.stringify(image)},kind:'image',ext:'png',size:1},{path:${JSON.stringify(broken)},kind:'image',ext:'png',size:43}]), convert('webp'))`);
+    assert.equal(radial.isVisible(), true, 'Partial failure must not vanish as a full success');
+    assert.match(await js(radial, 'document.querySelector("#notice-text").textContent'), /failed/i);
+    assert.equal(Boolean(toast()?.isVisible()), false);
     evidence.checks.push('Intentional repeat creates a separate collision-safe output; damaged input appears as an understandable failed job.');
+    evidence.checks.push('Failure and partial failure retain the wheel and readable recovery notice without a misleading success toast.');
 
     const ffmpeg = require(path.join(root, 'node_modules', 'ffmpeg-static'));
     const clip = path.join(folder, 'Motion.mp4');

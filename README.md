@@ -6,7 +6,7 @@ Sift 0.3 is an offline file converter that stays in the Windows notification are
 
 ### Windows 10/11, x64
 
-1. Run `Sift-0.3.0-windows-x64-setup.exe` from the local build handoff.
+1. Run `Sift-0.3.1-windows-x64-setup.exe` from the local build handoff.
 2. Sift installs for your Windows account and starts quietly. Look for its icon in the notification area; Windows may put it under **Show hidden icons**.
 3. Open the icon's menu and choose **Convert files…**, **Current jobs…** or **Settings…**.
 
@@ -18,7 +18,7 @@ The local Windows installer is unsigned unless signing credentials were explicit
 
 ### macOS 13 or later
 
-Choose the `arm64` DMG for an Apple Silicon Mac or `x64` for an Intel Mac. Open `Sift-0.3.0-macos-<arch>.dmg`, drag **Sift.app** into **Applications**, eject the disk image, then open Sift. It runs in the menu bar without a Dock icon.
+Choose the `arm64` DMG for an Apple Silicon Mac or `x64` for an Intel Mac. Open `Sift-0.3.1-macos-<arch>.dmg`, drag **Sift.app** into **Applications**, eject the disk image, then open Sift. It runs in the menu bar without a Dock icon.
 
 For drag shortcuts, use **Settings → Open shortcut access…**, enable Sift under **System Settings → Privacy & Security → Input Monitoring**, then quit and reopen Sift. Manual **Convert files…** remains available. Launch at login is optional; macOS may require approval under **General → Login Items**.
 
@@ -29,6 +29,8 @@ For drag shortcuts, use **Settings → Open shortcut access…**, enable Sift un
 - **Convert files…** chooses files and opens the format wheel. In an open wheel, **Ctrl+O / Command+O** also chooses files.
 - Drag files from Explorer/Desktop on Windows or Finder on macOS, hold **Shift**, and drop on a format. Hold **Alt** on Windows or **Command** on macOS for tools.
 - Click **Tools ›** in the center well for Crop, Add BG and the other image tools; **Formats ›** returns to conversion. **Tab** or right-click also switches. The switch preserves selected files.
+- Successful conversions and tool saves close the wheel/editor automatically. A small **Show** notification stays available for two seconds, then fades away. Failures and partial results remain available to review; saved results are also in **Current jobs…**.
+- The wheel has a transparent center around its controls, clear glass petals and an orange selection that deepens toward the outside. Moving between available wheel controls plays a quiet local click.
 - **Current jobs…** shows progress, cancellation, errors and saved results. Closing a window leaves the background utility running; use **Quit Sift** to exit.
 - **Ctrl+Alt+Space / Command+Option+Space** opens the wheel manually. Arrow keys navigate its controls; **Enter** or **Space** activates the focused control. **Escape** cancels an active wheel operation, returns from an editor or hides the wheel.
 

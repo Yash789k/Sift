@@ -27,6 +27,10 @@ Cancellation is cooperative: signal the engine, wait for FFmpeg/native work to f
 
 The conversion worker can exit when idle. The wheel is loaded on first use and retained for fast subsequent drags; the settings window is separate and optional. Electron still includes Chromium and Node, so the installation is substantial. This refactor reduces idle work and makes installation straightforward; it does not turn Electron into a tiny native binary. Replacing Electron solely to shrink that footprint would be a separate framework migration with substantial gesture, renderer and packaging work.
 
+In 0.3.1, a fully successful job hides the wheel or editor and creates a compact, temporary success window. Its Show action is available for two seconds after the renderer is ready and the native window is visible, followed by a 180 ms fade and window destruction. The main process owns the output path and validates reveal requests. Generation tokens invalidate old notifications on new work; rejected conflicting requests cannot invalidate the active job. Native dialogs defer dismissal, and failed, partial or cancelled work retains recovery controls. The notification adds no persistent idle renderer.
+
+The wheel uses a real transparent aperture, neutral translucent SVG petals, inset edge highlights and a radial orange selection. Its soft hover feedback is synthesized locally with Web Audio, created on first use, rate-limited between targets, suspended while idle and silent while busy. No audio asset, new runtime dependency, network request or system volume change is needed.
+
 ## Implementation sequence and dependencies
 
 1. Add an engine worker/service with progress messages, cancellation, duplicate suppression, idle disposal and worker-failure handling. Use Node's built-in worker APIs; no new runtime package.

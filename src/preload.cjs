@@ -19,7 +19,7 @@ contextBridge.exposeInMainWorld('sift', {
   setGesture: enabled => ipcRenderer.invoke('gesture', enabled),
   window: action => ipcRenderer.invoke('window', action),
   on: (event, callback) => {
-    if (!['mode', 'progress', 'state', 'gesture-status'].includes(event)) return;
+    if (!['mode', 'progress', 'state', 'gesture-status', 'visibility'].includes(event)) return;
     ipcRenderer.on(event, (_event, value) => callback(value));
   },
 });
