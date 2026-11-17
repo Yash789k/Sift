@@ -4,7 +4,7 @@ Sift 0.3 is an offline file converter that stays in the Windows notification are
 
 ![Sift's translucent conversion wheel](docs/wheel.png)
 
-*Sift 0.3.1, captured over a test background. Hold Shift while dragging for formats; use Tools for compression, cropping and other image actions.*
+*Sift 0.3.1, captured over a test background. Hold Shift while dragging for formats; use Tools for compression, cropping and other editing actions.*
 
 ## Download and install
 
@@ -12,8 +12,8 @@ Get Sift from **[GitHub Releases](https://github.com/Yash789k/Sift/releases)**. 
 
 | Your computer | Download |
 |---|---|
-| Mac with an Apple chip (M1, M2, M3, M4 or newer), macOS 13+ | [Download for Apple Silicon (.dmg)](https://github.com/Yash789k/Sift/releases/download/v0.3.3/Sift-0.3.3-macos-arm64.dmg) |
-| Windows 11 PC with an Intel or AMD 64-bit processor | [Download for Windows (.exe)](https://github.com/Yash789k/Sift/releases/download/v0.3.3/Sift-0.3.3-windows-x64-setup.exe) |
+| Mac with an Apple chip (M1, M2, M3, M4 or newer), macOS 13+ | [Download for Apple Silicon (.dmg)](https://github.com/Yash789k/Sift/releases/download/v0.3.4/Sift-0.3.4-macos-arm64.dmg) |
+| Windows 11 PC with an Intel or AMD 64-bit processor | [Download for Windows (.exe)](https://github.com/Yash789k/Sift/releases/download/v0.3.4/Sift-0.3.4-windows-x64-setup.exe) |
 
 You need **only the installer for your computer**. Node.js, Electron and the conversion tools are already included. You do not need Git, Terminal commands, an account or an API key. The **Source code** and **Corresponding source** downloads are for developers, not installation. Native Windows ARM and Intel Mac installers are not part of this first prerelease.
 
@@ -42,7 +42,7 @@ A **Sift** shortcut is added to Start. You do not need to open a console or run 
 
 - **Convert files…** chooses files and opens the format wheel. In an open wheel, **Ctrl+O / Command+O** also chooses files.
 - Drag files from Explorer/Desktop on Windows or Finder on macOS, hold **Shift**, and drop on a format. Hold **Alt** on Windows or **Command** on macOS for tools.
-- Click **Tools ›** in the center well for Crop, Add BG and the other image tools; **Formats ›** returns to conversion. **Tab** or right-click also switches. The switch preserves selected files.
+- Click **Tools ›** in the center well for Crop, Add BG and the other image/PDF tools; **Formats ›** returns to conversion. **Tab** or right-click also switches. The switch preserves selected files.
 - Successful conversions and tool saves close the wheel/editor automatically. A small **Show** notification stays available for two seconds, then fades away. Failures and partial results remain available to review; saved results are also in **Current jobs…**.
 - The wheel has a transparent center around its controls, clear glass petals and an orange selection that deepens toward the outside. Moving between available wheel controls plays a quiet local click.
 - **Current jobs…** shows progress, cancellation, errors and saved results. Closing a window leaves the background utility running; use **Quit Sift** to exit.
@@ -90,6 +90,22 @@ PDF image export uses 144 dpi bounded to 20 megapixels per page. Encrypted PDFs 
 | Redact | Solid or blurred rectangular area |
 
 Editors operate on the first frame/page. Supported GIF/WebP conversion can preserve animation; static outputs and applicable transforms report first-frame behavior. Metadata removal re-encodes a copy and can change file size; it is not a file-timestamp editor. Compression may not make an already efficient input smaller. Successful files remain when a later batch item fails or is cancelled.
+
+## PDF tools
+
+Select or drop **one PDF**, open **Tools**, and choose any of the seven actions. In a page editor, use **Page** above the preview to choose a page; changing pages resets that page's controls. Press **Apply** to save a new PDF. The original is never overwritten.
+
+| Tool | PDF behavior |
+|---|---|
+| Compress | **Compact** preserves text and image quality. **Flattened** compresses all pages into images with quality and size controls. Small PDFs may not shrink. |
+| Metadata | Inspect and remove document properties and embedded XMP. Visible text, comments and attachment contents are not removed. |
+| Edit | Rotate or scale the selected page, or check **All pages**. Text stays selectable. |
+| Annotate | Add a text label with color, size and position to the selected page. Existing text stays selectable; the added label is an image. |
+| Add BG | Add a colored frame with padding to the selected page or all pages. Text stays selectable; links and interactive fields on framed pages are not retained. |
+| Crop | Drag/resize the box or enter its position and size. Changes only the selected page's visible area. Hidden content remains in the PDF; use Redact for permanent removal. |
+| Redact | Cover a selected area with a solid box and save. The copy is rebuilt from images of every page, permanently excluding the underlying PDF text and objects. |
+
+**Redaction and Flattened compression turn every page into an image.** Selectable text, links, forms, bookmarks and document metadata are not retained. Redaction uses solid removal, not blur. Page measurements are in points (72 points = 1 inch). Supported documents contain 1–300 pages, are at most 250 MiB and are not password-protected. Files are processed locally on both Mac and Windows.
 
 ## Local state and privacy
 

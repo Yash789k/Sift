@@ -145,6 +145,7 @@ jobs:
           node scripts/collect-npm-notices.cjs
       - run: npm run check:package
       - run: npm test
+      - run: npm run test:pdf
       - run: npm run test:desktop
       - if: runner.os == 'macOS'
         run: npm run test:mac

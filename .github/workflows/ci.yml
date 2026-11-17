@@ -23,6 +23,7 @@ jobs:
       - run: npm run check:package
       - run: npm run build:native
       - run: npm test
+      - run: npm run test:pdf
       - if: runner.os == 'macOS'
         run: npm run test:mac
       - run: npm run package

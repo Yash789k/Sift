@@ -135,6 +135,7 @@ function encodeHeic(data, info, signal) {
 
 function readableError(error) {
   const message = String(error?.message || error);
+  if (/encrypted|password/i.test(message)) return 'This PDF is password-protected. Save an unlocked copy before editing it in Sift.';
   if (/ENOENT/.test(message)) return 'The file could not be found. It may have moved.';
   if (/EACCES|EPERM/.test(message)) return 'Sift does not have permission to read or write this location.';
   if (/ENOSPC/.test(message)) return 'There is not enough free space to save this file.';
@@ -194,6 +195,22 @@ async function inspectFiles(paths) {
 }
 
 async function previewFile(filePath) {
+  if (filePath && typeof filePath === 'object') {
+    const [file] = normalizePaths([filePath.path]);
+    if (kindFor(path.extname(file).slice(1).toLowerCase()) === 'pdf') {
+      const [info] = await inspectFiles([file]);
+      if (info.error) throw new Error(info.error);
+      const doc = await loadPdf(file);
+      try {
+        const number = filePath.page ?? 1;
+        if (!Number.isInteger(number) || number < 1 || number > doc.numPages) throw new Error('Choose a valid PDF page.');
+        const page = await doc.getPage(number);
+        try { return `data:image/png;base64,${(await renderPdfPage(page, 1)).data.toString('base64')}`; }
+        finally { page.cleanup(); }
+      } finally { await doc.destroy(); }
+    }
+    filePath = file;
+  }
   const [file] = normalizePaths([filePath]);
   if (kindFor(path.extname(file).slice(1).toLowerCase()) !== 'image') {
     throw new Error('Image previews are available for supported image files.');
@@ -505,7 +522,7 @@ async function loadPdf(file) {
   const pdfjs = await pdfLibrary;
   const root = path.dirname(require.resolve('pdfjs-dist/package.json'));
   return pdfjs.getDocument({
-    data: new Uint8Array(await fs.readFile(file)), isEvalSupported: false,
+    data: new Uint8Array(typeof file === 'string' ? await fs.readFile(file) : file), isEvalSupported: false,
     standardFontDataUrl: path.join(root, 'standard_fonts') + path.sep,
     cMapUrl: path.join(root, 'cmaps') + path.sep, cMapPacked: true,
     useSystemFonts: false, disableFontFace: true,
@@ -657,4 +674,4 @@ async function convert(request, onProgress, signal) {
 }
 
 module.exports = { getCapabilities, inspectFiles, previewFile, convert,
-  _internals: { image, decodedInput, orientedDimensions, normalizePaths, checkAbort, outputFolder, publish, tempPath, finalResult, readableError } };
+  _internals: { image, decodedInput, orientedDimensions, normalizePaths, checkAbort, outputFolder, publish, tempPath, finalResult, readableError, loadPdf, renderPdfPage } };

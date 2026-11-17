@@ -18,6 +18,7 @@ module.exports = {
     'src/**/*',
     'engine.cjs',
     'tools-engine.cjs',
+    'pdf-tools.cjs',
     'heic-worker.cjs',
     'samples/**/*',
     'LICENSE',

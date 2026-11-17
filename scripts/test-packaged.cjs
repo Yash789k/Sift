@@ -42,6 +42,14 @@ async function main() {
     assert.equal((await sharp(page.path).metadata()).format, 'png');
   }
   checks.push('Packaged PDF rendering');
+  const { inspectTools, runTool } = requireApp('./tools-engine.cjs');
+  assert.equal((await inspectTools(pdf)).tools.length, 7);
+  for (const [tool, options] of [['crop', {left:0,top:0,width:50,height:50}], ['annotate', {text:'Packaged PDF test',x:10,y:10,fontSize:12}], ['redact', {left:0,top:0,width:50,height:50}]]) {
+    const [edited] = await runTool({paths:[pdf],tool,options,outputDir:folder});
+    assert.equal(edited.error, undefined, JSON.stringify(edited));
+    assert.ok((await requireApp('pdf-lib').PDFDocument.load(await fs.readFile(edited.path))).getPageCount() > 0);
+  }
+  checks.push('Packaged PDF crop, annotation and permanent redaction');
   const audio = path.join(folder, 'tone.wav');
   await run(ffmpeg, ['-y', '-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=0.3', audio]);
   const result = await convert({ paths: [audio], format: 'mp3', outputDir: folder });

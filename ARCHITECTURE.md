@@ -12,7 +12,7 @@ Assessment date: 2026-10-22. Baseline: Sift 0.2.0, commit `fa5efff`.
 | Images | Sharp/libvips, BMP decoder, HEIC decoder and elheif WASM encoder | Reuse conversion code |
 | Documents | pdf-lib, PDF.js, canvas, docx | Reuse supported PDF/image/document operations |
 | Audio/video | Bundled ffmpeg-static | Keep offline child-process conversions |
-| Image tools | `tools-engine.cjs`: crop, background, compression, metadata, edits, text, redaction | Keep the existing tools and compact editors |
+| Editing tools | `tools-engine.cjs` dispatches image operations and `pdf-tools.cjs` page-aware PDF operations | Keep image behavior; preserve PDF text for vector edits, rebuild redaction from rendered pages |
 | Native integration | Koffi; Windows C# selection/desktop refresh helper; macOS pasteboard/modifier reader | Keep platform-specific integration |
 | Distribution | `@electron/packager` folder output; no installer, startup registration or signing pipeline | Replace only the packaging tool |
 | Platforms | Windows and macOS source/build paths; Windows runtime tested previously | Separate native builds for Windows x64, macOS ARM64 and macOS x64 |
