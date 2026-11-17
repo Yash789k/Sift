@@ -23,6 +23,7 @@ Use Node.js **22.12+** (Node 24 recommended), installed for your target architec
 
 ```sh
 npm run test:desktop
+npm run test:pdf
 npm run check:package
 npm run package:dir
 npm run package

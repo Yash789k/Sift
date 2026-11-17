@@ -44,7 +44,8 @@ function validateOptions(options) {
 
 async function inspectTools(value) {
   const multiple = Array.isArray(value);
-  const files = await inspectFiles(multiple ? value : [value]);
+  const request = !multiple && value && typeof value === 'object' ? value : { path: value };
+  const files = await inspectFiles(multiple ? value : [request.path]);
   const results = [];
   for (const file of files) {
     const metadata = [{ label: 'File name', value: file.name }, { label: 'File size', value: `${file.size.toLocaleString('en-US')} bytes` },
@@ -57,6 +58,13 @@ async function inspectTools(value) {
         if (value == null || ArrayBuffer.isView(value) || typeof value === 'object' && !(value instanceof Date)) continue;
         metadata.push({ label, value: (value instanceof Date ? value.toISOString() : String(value)).slice(0, 500) });
       }
+    }
+    if (file.kind === 'pdf' && !file.error) {
+      try {
+        const info = await require('./pdf-tools.cjs').inspectPdf(file.path, request.page);
+        results.push({ ...file, ...info, metadata: [...metadata, ...info.metadata], tools: TOOLS });
+      } catch (error) { results.push({ ...file, metadata, tools: [], error: readableError(error) }); }
+      continue;
     }
     results.push({ ...file, metadata, tools: file.kind === 'image' && !file.error ? TOOLS : [],
       metadataNote: 'Removing metadata creates a new image without EXIF, GPS, IPTC or XMP. The original stays unchanged.' });
@@ -188,13 +196,14 @@ async function applyTool(file, tool, supplied = {}) {
 
 async function previewTool(request) {
   const [file] = normalizePaths([request?.path || request?.paths?.[0]]);
+  if (path.extname(file).toLowerCase() === '.pdf') return require('./pdf-tools.cjs').previewPdfTool(file, request.tool, request.options);
   const processed = await applyTool(file, request.tool, request.options);
   const data = await image(processed.data).resize(1200, 800, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
   return `data:image/png;base64,${data.toString('base64')}`;
 }
 
 async function runTool(request, onProgress, signal) {
-  if (!request || !TOOLS.includes(request.tool)) throw new Error('Choose a supported image tool.');
+  if (!request || !TOOLS.includes(request.tool)) throw new Error('Choose a supported editing tool.');
   const files = normalizePaths(request.paths);
   const results = [];
   for (let index = 0; index < files.length; index++) {
@@ -206,8 +215,10 @@ async function runTool(request, onProgress, signal) {
       onProgress?.({ index, total: files.length, source: file, status: 'converting' });
       const [inspected] = await inspectFiles([file]);
       if (inspected.error) throw new Error(inspected.error);
-      if (inspected.kind !== 'image') throw new Error('This tool works with image files.');
-      const processed = await applyTool(file, request.tool, request.options);
+      if (!['image', 'pdf'].includes(inspected.kind)) throw new Error('This tool works with images and PDFs.');
+      const processed = inspected.kind === 'pdf'
+        ? await require('./pdf-tools.cjs').applyPdfTool(file, request.tool, request.options, signal, onProgress)
+        : await applyTool(file, request.tool, request.options);
       checkAbort(signal);
       const folder = await outputFolder(file, request.outputDir);
       const ext = processed.format === 'jpeg' ? 'jpg' : processed.format;
@@ -216,6 +227,7 @@ async function runTool(request, onProgress, signal) {
       checkAbort(signal);
       const destination = await publish(temp, folder, `${path.parse(file).name}-${request.tool === 'metadata' ? 'metadata-removed' : request.tool}`, ext);
       const result = await finalResult(file, destination, { width: processed.width, height: processed.height,
+        ...(processed.pages ? { pages: processed.pages } : {}),
         originalSize: inspected.size, savedBytes: inspected.size - processed.data.length,
         ...(processed.warning ? { warning: processed.warning } : {}) });
       results.push(result);

@@ -397,9 +397,9 @@ handle('ingestion-begin', () => { if (jobs.current) throw new Error('A file oper
 handle('ingestion-end', () => { ingestionInProgress = false; retainedQuick = false; });
 handle('choose-files', () => chooseFiles(win));
 handle('sample', () => engine.request('inspectFiles', [path.join(__dirname, '..', 'samples', 'Aurora.png')]));
-handle('preview', (_event, filePath) => { validatePaths([filePath]); return engine.request('previewFile', filePath); });
+handle('preview', (_event, filePath) => { validatePaths([typeof filePath === 'object' ? filePath?.path : filePath]); return engine.request('previewFile', filePath); });
 handle('inspect', (_event, paths) => { validatePaths(paths, 0); clearTimeout(releaseTimer); retainedQuick = true; return engine.request('inspectFiles', paths); });
-handle('inspect-tools', (_event, paths) => { validatePaths(Array.isArray(paths) ? paths : [paths]); return engine.request('inspectTools', paths); });
+handle('inspect-tools', (_event, paths) => { validatePaths(Array.isArray(paths) ? paths : [typeof paths === 'object' ? paths?.path : paths]); return engine.request('inspectTools', paths); });
 handle('tool-preview', (_event, request) => { validatePaths([request?.path]); return engine.request('previewTool', request); });
 handle('run-tool', (_event, request) => { if (typeof request?.tool !== 'string') throw new Error('Choose a tool.'); return runJob(request, 'runTool', request.tool); });
 handle('convert', (_event, request) => { if (typeof request?.format !== 'string' || request.format.length > 12) throw new Error('Choose an output format.'); return runJob(request, 'convert', request.format); });

@@ -39,7 +39,7 @@ If macOS explicitly reports malware, the download is damaged, or your computer i
 1. On the first launch, macOS may ask for Input Monitoring access. If you skipped it, click Sift's menu-bar icon → **Enable drag shortcuts…**. You can also use **Settings… → Open shortcut access…**. This registers Sift in the permission list and opens the settings page.
 2. Enable Sift under **System Settings → Privacy & Security → Input Monitoring**.
 3. Choose **Quit & Reopen** when macOS asks, or quit Sift using its menu and reopen it from Applications.
-4. In Finder, select a file, **hold the mouse button down and start dragging**, then hold **Shift**. The wheel appears around the pointer. Drag onto a format and release the mouse button. Hold **Command** for image tools instead.
+4. In Finder, select a file, **hold the mouse button down and start dragging**, then hold **Shift**. The wheel appears around the pointer. Drag onto a format and release the mouse button. Hold **Command** for image/PDF tools instead.
 
 Selecting files and pressing Shift without dragging does not open the wheel. You do not need to click Sift's icon before dragging. The menu-bar icon opens its menu; choose **Open format wheel** to open a wheel manually. **Escape** or clicking outside dismisses an idle manually opened wheel. An active editor or conversion keeps its recovery controls.
 
@@ -64,7 +64,7 @@ This prerelease has no Microsoft-trusted publisher signature. SmartScreen may sh
 
 ### Optional: drag shortcuts and startup
 
-Drag a file from Explorer, hold **Shift**, then drop it onto a format. Hold **Alt** for image tools. Enable **Launch at login** in Sift's settings if you want it to start with Windows. It is off by default.
+Drag a file from Explorer, hold **Shift**, then drop it onto a format. Hold **Alt** for image/PDF tools. Enable **Launch at login** in Sift's settings if you want it to start with Windows. It is off by default.
 
 ## 4. Convert your first file
 
@@ -96,3 +96,12 @@ Converted files are kept. Preferences, recent output records and local logs are 
 ## Report a problem
 
 Open a [GitHub issue](https://github.com/Yash789k/Sift/issues) with your Sift version, OS version, chip/system type, the exact message and steps to reproduce. Use non-sensitive sample files. Review logs and screenshots before sharing them; they can contain file locations. Never include passwords or signing keys.
+
+## Editing a PDF
+
+1. Choose a PDF using **Convert files…**, or drag it onto the Tools wheel.
+2. Click **Tools ›** if the format wheel is showing. All seven tools support PDFs.
+3. Choose a tool, then select the page above the preview. Edit and Add BG also offer **All pages**.
+4. Adjust the controls and press **Apply** (or **Remove Metadata** / **Save with Background**). Sift saves a separate PDF.
+
+Use **Compact** compression to keep selectable text. **Flattened** compression and **Redact** make every page an image and remove selectable text and interactive features. Crop only hides content; choose Redact for permanent removal. See the [PDF tools guide](../README.md#pdf-tools) for each tool’s behavior.

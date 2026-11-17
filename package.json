@@ -1,6 +1,6 @@
 {
   "name": "sift-desktop",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "description": "An offline background file converter for Windows and macOS. Drag, Shift, drop.",
   "author": "Sift contributors",
@@ -17,7 +17,8 @@
     "package:dir": "node scripts/package.cjs --dir",
     "check:package": "node scripts/package.cjs --check",
     "build:native": "node scripts/build-native.cjs",
-    "prestart": "node scripts/build-native.cjs"
+    "prestart": "node scripts/build-native.cjs",
+    "test:pdf": "electron tests/pdf-tools.electron.cjs"
   },
   "engines": {
     "node": ">=22.12.0"
